@@ -1,6 +1,6 @@
 ---
 name: ui-review
-description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-MM-DD/HH-mm-ss，含 review.md 且 format 为 uiboard-review/1），把每个 #N 问题关联到当前仓库的模块文件（Activity / Fragment / layout / view id），先产出关联表与修复 plan，确认后再改代码。触发：/ui-review <path>、$ui-review <path>，或用户贴出 UIReview 目录路径要求修 UI。
+description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-MM-DD/HH-mm-ss，含 review.md 且 format 为 uiboard-review/1），把每个 #N 问题关联到当前仓库的模块文件（Activity / Fragment / layout / view id），先产出关联表与修复 plan，确认后再改代码。可在路径后附定位提示（文件 / 类名 / 目录 / 一句话，可用 `#N:` 限定到单个问题）。触发：/ui-review <path> [提示]、$ui-review <path> [提示]，或用户贴出 UIReview 目录路径要求修 UI。
 ---
 
 # UI Review → 模块文件关联与修复
@@ -8,6 +8,7 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 ## 输入
 
 - 一个或多个 review 目录路径（可带引号）。review 目录是只读输入，禁止在里面写任何文件。
+- 可选的定位提示：参数里凡是「存在且含 `review.md` 的目录」都是 review 路径，其余内容一律是提示。提示可以是文件路径、类名、目录 / 模块、页面描述；以 `#N:` 开头的只作用于第 N 个问题，否则作用于全部。
 - 先读 `review.md` frontmatter：`format` 必须是 `uiboard-review/1`，主版本不认识就停下报告。
 - 字段含义见 `references/review-format.md`。
 
@@ -30,6 +31,13 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 
 ## 关联模块文件（每个 #N，按证据强度依次尝试，命中即停）
 
+有提示时，先从提示指向的文件 / 类 / 目录开始找，但结论必须用下面的运行时证据核对：
+
+- 提示与 `views` / `activity` 一致：来源记「一致」，置信度按证据取。
+- 提示与运行时证据冲突（例如命中的 id 不在提示的文件里）：**以运行时证据为准**，来源记「冲突」，在根因假设里写明提示指向哪里、证据指向哪里，不要悄悄只采纳一方。
+- 没有 `views` 时（Compose、全屏画布、目标无 id、通用容器 activity），提示成为首选入口：能被 activity 或 crop 文案佐证记「高」，否则记「推测」。
+- 提示只决定从哪开始找，不限制修改范围；根因在共享组件时按「修复原则」处理。
+
 1. `views`：取 resource-id 的 name → `rg -n '@\+id/<name>\b' --glob '**/res/layout*/**'` → layout 文件:行 → 找引用该 layout 的类（`R.layout.<layout>` 或 `<LayoutCamel>Binding`）→ 在类中找该 view 的使用（`binding.<nameCamel>` / `R.id.<name>`）。同一个 id 出现在多个 layout 时，选同时包含该 #N 其他命中 id（父容器）的那个 layout；仍有多个时再用 activity 所承载的页面链路（Activity → Fragment / ViewPager）排除。
 2. `activity`：定位 Activity 类文件，结合 crop 可见内容锁定其 Fragment / Adapter / 子布局。
 3. crop 中的可见文案：`rg` 字符串资源的 value → `@string/<name>` / `R.string.<name>` 的使用处。
@@ -41,8 +49,8 @@ resource-id 或 activity 属于第三方包（广告 SDK 等）时标注「非�
 
 先输出关联表：
 
-| # | 问题摘要 | 证据 | 文件:行 | 置信度（确定/高/推测） | 根因假设 |
-|---|---|---|---|---|---|
+| # | 问题摘要 | 来源（views / activity / 文案 / 提示 / 一致 / 冲突 / 推测） | 证据 | 文件:行 | 置信度（确定/高/推测） | 根因假设 |
+|---|---|---|---|---|---|---|
 
 然后：
 

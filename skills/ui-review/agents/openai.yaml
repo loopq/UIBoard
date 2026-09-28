@@ -1,6 +1,6 @@
 interface:
   display_name: "UI Review"
   short_description: "Map UIBoard review issues to module files and fix them"
-  default_prompt: "Use $ui-review with this UIReview directory path."
+  default_prompt: "Use $ui-review with this UIReview directory path, optionally followed by an entry hint (file, class, module, or page)."
 policy:
   allow_implicit_invocation: true

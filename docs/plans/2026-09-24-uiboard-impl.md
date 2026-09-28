@@ -25,6 +25,7 @@
 | Skill 放 `/ui-review` | 单一源在本仓 `skills/ui-review/`，symlink 到 `~/.claude/skills` 与 `~/.codex/skills` | Claude `/ui-review`、Codex `$ui-review` 共用一份，避免两份副本漂移 |
 | Phase 6 才做 Skill | T0 先用手工 review 目录验证 Skill | 最大风险前置；契约冻结后 Codex / Claude 才能并行 |
 | History 保留 | 保留只读 History，放最后 | 用户决策 |
+| Skill 只收 review 路径 | `/ui-review <路径> [提示]`：路径后可附文件 / 类名 / 目录 / 页面描述，`#N:` 限定单个问题；冲突时以运行时证据为准并标「冲突」；提示不限制修改范围。App 不增加入口字段 | 用户决策（2026-09-28）：覆盖无 id 页面、通用容器 activity、同 id 多模块三类场景；项目信息不进 App |
 
 ## 3. 端到端工作流与断点防护
 
@@ -382,7 +383,7 @@ spike 记录（T0.4，2026-09-28，Pixel 7 `29091FDH200FEN` 420dpi 1080×2400 / 
 
 ### `skills/ui-review/SKILL.md`
 
-> 已落地，**以仓库里的 `skills/ui-review/SKILL.md` 为准**；下方是初版，S1 按 T0.6 结果补了 id 消歧、可见区域 bounds、位图尺寸三条。
+> 已落地，**以仓库里的 `skills/ui-review/SKILL.md` 为准**；下方是初版。之后的改动：S1 按 T0.6 结果补了 id 消歧、可见区域 bounds、位图尺寸三条；2026-09-28 加了可选定位提示（输入规则、与运行时证据的优先级、关联表「来源」列）。
 
 ```markdown
 ---
