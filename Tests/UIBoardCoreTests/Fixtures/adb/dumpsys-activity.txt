@@ -1,0 +1,2 @@
+  topResumedActivity=ActivityRecord{8b1c2d4 u0 com.stickermobi.avatarmaker/.ui.task.TaskCenterActivity t1234}
+    mResumedActivity: ActivityRecord{8b1c2d4 u0 com.stickermobi.avatarmaker/.ui.task.TaskCenterActivity t1234}

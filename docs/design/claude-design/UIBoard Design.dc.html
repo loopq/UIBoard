@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><meta name="design_doc_mode" content="canvas"><style>body{margin:0;background:#D4D4D6;}a{color:#0A84FF;}a:hover{color:#0060DF;}</style></helmet>
+<div style="padding:80px;display:grid;grid-template-columns:1280px 1280px;gap:96px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','PingFang SC','Helvetica Neue',sans-serif;color:rgba(0,0,0,0.85);font-size:13px;">
+<div id="A" data-screen-label="A Editor Empty">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">A</span><span style="font-size:18px;font-weight:600;">Editor — Empty</span><span style="color:rgba(0,0,0,0.55);">Light · 1280×820</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);">
+    <dc-import name="UIBoardEditor" empty="true" hint-size="1280px,820px"></dc-import>
+  </div>
+</div>
+<div id="B" data-screen-label="B Editor Working">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">B</span><span style="font-size:18px;font-weight:600;">Editor — Working</span><span style="color:rgba(0,0,0,0.55);">Light · 1280×820 · Primary</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);">
+    <dc-import name="UIBoardEditor" hint-size="1280px,820px"></dc-import>
+  </div>
+</div>
+<div id="C" data-screen-label="C Editor Working Dark">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">C</span><span style="font-size:18px;font-weight:600;">Editor — Working</span><span style="color:rgba(0,0,0,0.55);">Dark · 1280×820</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.6),0 12px 32px rgba(0,0,0,0.25);--toolbar:#2A2A2A;--canvas:#1E1E1E;--panel:#262626;--line:rgba(255,255,255,0.1);--text:rgba(255,255,255,0.88);--text2:rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.25);--ctrl:rgba(255,255,255,0.08);--card:#2E2E2E;--cardline:rgba(255,255,255,0.07);--selbg:rgba(10,132,255,0.16);--field:rgba(255,255,255,0.05);--fieldline:rgba(255,255,255,0.1);--dash:rgba(255,255,255,0.22);--shotline:rgba(255,255,255,0.14);">
+    <dc-import name="UIBoardEditor" hint-size="1280px,820px"></dc-import>
+  </div>
+</div>
+<div id="D" data-screen-label="D Device Menu">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">D</span><span style="font-size:18px;font-weight:600;">Device menu</span><span style="color:rgba(0,0,0,0.55);">Light · over B</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);">
+    <dc-import name="UIBoardEditor" hint-size="1280px,820px"></dc-import>
+    <div style="position:absolute;left:84px;top:44px;width:260px;padding:5px;border-radius:8px;background:rgba(246,246,246,0.98);box-shadow:0 0 0 0.5px rgba(0,0,0,0.18),0 8px 24px rgba(0,0,0,0.16);box-sizing:border-box;display:flex;flex-direction:column;">
+      <div style="display:flex;gap:6px;padding:4px 10px 4px 8px;">
+        <div style="width:14px;flex:none;padding-top:3px;"><svg width="12" height="12" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><path d="M4.5 12.5 9.5 17.5 19.5 6.5"></path></svg></div>
+        <div style="display:flex;flex-direction:column;gap:1px;"><span>Pixel 7</span><span style="font:11px 'SF Mono',ui-monospace,Menlo,monospace;color:rgba(0,0,0,0.5);">37091JEHN</span></div>
+      </div>
+      <div style="display:flex;gap:6px;padding:4px 10px 4px 8px;">
+        <div style="width:14px;flex:none;"></div>
+        <div style="display:flex;flex-direction:column;gap:1px;"><span>Android Emulator</span><span style="font:11px 'SF Mono',ui-monospace,Menlo,monospace;color:rgba(0,0,0,0.5);">emulator-5554</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;color:rgba(0,0,0,0.3);">
+        <div style="width:14px;flex:none;"></div>
+        <span style="flex:1;">Galaxy S23</span>
+        <svg width="13" height="13" viewBox="0 0 24 24"><path d="M12 2.5 22.5 21h-21Z" style="fill:#FFB800;"></path><path d="M12 9.5v5M12 17.6v.4" style="stroke:#FFFFFF;stroke-width:2.4;stroke-linecap:round;fill:none;"></path></svg>
+        <span style="font-size:11px;color:#B07A00;">unauthorized</span>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,0.1);margin:5px 10px;"></div>
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;">
+        <div style="width:14px;flex:none;"></div>
+        <svg width="13" height="13" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M20.5 12a8.5 8.5 0 1 1-2.8-6.3L20.5 8"></path><path d="M20.5 3.5V8H16"></path></svg>
+        <span style="flex:1;">Refresh</span>
+        <span style="color:rgba(0,0,0,0.4);">⌘R</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="E" data-screen-label="E Export Sheet">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">E</span><span style="font-size:18px;font-weight:600;">Export success sheet</span><span style="color:rgba(0,0,0,0.55);">Light · over B</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);">
+    <dc-import name="UIBoardEditor" hint-size="1280px,820px"></dc-import>
+    <div style="position:absolute;left:0;right:0;top:52px;bottom:0;background:rgba(0,0,0,0.18);"></div>
+    <div style="position:absolute;left:420px;top:60px;width:440px;padding:20px;border-radius:12px;background:#F6F6F6;box-shadow:0 0 0 0.5px rgba(0,0,0,0.18),0 10px 30px rgba(0,0,0,0.2);box-sizing:border-box;">
+      <svg width="32" height="32" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" style="fill:#34C759;"></circle><path d="M7 12.5l3.2 3.2L17 8.8" style="fill:none;stroke:#FFFFFF;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"></path></svg>
+      <div style="font-weight:700;margin-top:12px;">Exported</div>
+      <div style="height:28px;margin-top:8px;display:flex;align-items:center;padding:0 8px;border-radius:6px;background:#FFFFFF;border:1px solid rgba(0,0,0,0.12);box-sizing:border-box;font:12px 'SF Mono',ui-monospace,Menlo,monospace;"><span style="background:rgba(10,132,255,0.22);border-radius:2px;">~/UIReview/2026-09-24/18-15-42</span></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+        <div style="height:24px;padding:0 12px;border-radius:6px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2),0 0.5px 1px rgba(0,0,0,0.1);display:flex;align-items:center;">Reveal in Finder</div>
+        <div style="height:24px;padding:0 12px;border-radius:6px;background:#0A84FF;color:#FFFFFF;font-weight:500;display:flex;align-items:center;">Copy Path</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="F" data-screen-label="F Replace Alert">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">F</span><span style="font-size:18px;font-weight:600;">Replace confirmation</span><span style="color:rgba(0,0,0,0.55);">Light · over B</span></div>
+  <div style="position:relative;width:1280px;height:820px;border-radius:10px;overflow:hidden;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);">
+    <dc-import name="UIBoardEditor" hint-size="1280px,820px"></dc-import>
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,0.12);"></div>
+    <div style="position:absolute;left:510px;top:250px;width:260px;padding:20px 16px 16px;border-radius:12px;background:#F2F2F2;box-shadow:0 0 0 0.5px rgba(0,0,0,0.18),0 10px 30px rgba(0,0,0,0.2);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;">
+      <div style="position:relative;width:64px;height:64px;border-radius:15px;background:#0A84FF;">
+        <div style="position:absolute;left:17px;top:20px;width:30px;height:24px;border:3px solid #FFFFFF;border-radius:5px;box-sizing:border-box;"></div>
+        <div style="position:absolute;left:10px;top:13px;width:14px;height:14px;border-radius:7px;background:#FF3B30;border:2px solid #FFFFFF;box-sizing:border-box;"></div>
+      </div>
+      <div style="font-weight:700;margin-top:12px;">Replace screenshot?</div>
+      <div style="font-size:11px;margin-top:6px;color:rgba(0,0,0,0.7);">This will clear 3 annotations.</div>
+      <div style="display:flex;gap:8px;margin-top:16px;align-self:stretch;">
+        <div style="flex:1;height:28px;border-radius:6px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2),0 0.5px 1px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;">Cancel</div>
+        <div style="flex:1;height:28px;border-radius:6px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2),0 0.5px 1px rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;color:#FF3B30;font-weight:500;">Replace</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="G" data-screen-label="G History">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">G</span><span style="font-size:18px;font-weight:600;">History</span><span style="color:rgba(0,0,0,0.55);">Light · 900×640 · hover on 17:42:31</span></div>
+  <div style="width:900px;height:640px;border-radius:10px;overflow:hidden;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);display:flex;flex-direction:column;">
+    <div style="height:52px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;background:#F3F3F3;border-bottom:1px solid rgba(0,0,0,0.1);box-sizing:border-box;font-weight:600;">
+      <div style="position:absolute;left:20px;top:20px;display:flex;gap:8px;"><div style="width:12px;height:12px;border-radius:6px;background:#FF5F57;"></div><div style="width:12px;height:12px;border-radius:6px;background:#FEBC2E;"></div><div style="width:12px;height:12px;border-radius:6px;background:#28C840;"></div></div>
+      History
+    </div>
+    <div style="flex:1;overflow:hidden;padding:24px;display:flex;flex-direction:column;gap:32px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">2026-09-24</span><span style="min-width:18px;height:16px;padding:0 5px;border-radius:8px;background:rgba(0,0,0,0.05);box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:rgba(0,0,0,0.55);">3</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div style="--s:0.11111;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"><dc-import name="PhoneShot" set="main" hint-size="120px,267px"></dc-import></div><span style="font-size:11px;color:rgba(0,0,0,0.55);">18:15:42</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div style="position:relative;--s:0.11111;border-radius:6px;overflow:hidden;box-shadow:0 0 0 2px #0A84FF;"><dc-import name="PhoneShot" set="h2" hint-size="120px,267px"></dc-import>
+            <div style="position:absolute;right:6px;top:6px;display:flex;gap:4px;">
+              <div style="width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,0.96);box-shadow:0 0 0 0.5px rgba(0,0,0,0.18),0 1px 3px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;"><rect x="8.5" y="8.5" width="12" height="12" rx="2"></rect><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"></path></svg></div>
+              <div style="width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,0.96);box-shadow:0 0 0 0.5px rgba(0,0,0,0.18),0 1px 3px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path></svg></div>
+            </div></div><span style="font-size:11px;color:rgba(0,0,0,0.55);">17:42:31</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div style="--s:0.11111;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"><dc-import name="PhoneShot" set="h3" hint-size="120px,267px"></dc-import></div><span style="font-size:11px;color:rgba(0,0,0,0.55);">11:08:05</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:6px;"><span style="font-weight:700;">2026-09-23</span><span style="min-width:18px;height:16px;padding:0 5px;border-radius:8px;background:rgba(0,0,0,0.05);box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:rgba(0,0,0,0.55);">2</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:12px;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div style="--s:0.11111;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"><dc-import name="PhoneShot" set="h4" hint-size="120px,267px"></dc-import></div><span style="font-size:11px;color:rgba(0,0,0,0.55);">16:30:12</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;"><div style="--s:0.11111;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,0.12);"><dc-import name="PhoneShot" set="h5" hint-size="120px,267px"></dc-import></div><span style="font-size:11px;color:rgba(0,0,0,0.55);">10:02:47</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="H" data-screen-label="H Settings">
+  <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px;"><span style="font:600 13px ui-monospace,Menlo,monospace;background:#1D1D1F;color:#FFFFFF;padding:2px 8px;border-radius:4px;">H</span><span style="font-size:18px;font-weight:600;">Settings</span><span style="color:rgba(0,0,0,0.55);">Light · 560×260</span></div>
+  <div style="width:560px;height:260px;border-radius:10px;overflow:hidden;background:#F3F3F3;box-shadow:0 0 0 0.5px rgba(0,0,0,0.25),0 12px 32px rgba(0,0,0,0.14);display:flex;flex-direction:column;">
+    <div style="height:52px;flex:none;position:relative;display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(0,0,0,0.1);box-sizing:border-box;font-weight:600;">
+      <div style="position:absolute;left:20px;top:20px;display:flex;gap:8px;"><div style="width:12px;height:12px;border-radius:6px;background:#FF5F57;"></div><div style="width:12px;height:12px;border-radius:6px;background:#FEBC2E;"></div><div style="width:12px;height:12px;border-radius:6px;background:#28C840;"></div></div>
+      Settings
+    </div>
+    <div style="padding:24px;">
+      <div style="border-radius:8px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.12);">
+        <div style="height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;">
+          <span style="width:80px;flex:none;">Workspace</span>
+          <span style="flex:1;min-width:0;font:12px 'SF Mono',ui-monospace,Menlo,monospace;">~/UIReview</span>
+          <div style="height:22px;padding:0 10px;border-radius:5px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2),0 0.5px 1px rgba(0,0,0,0.1);display:flex;align-items:center;">Choose…</div>
+        </div>
+        <div style="height:1px;background:rgba(0,0,0,0.08);margin:0 12px;"></div>
+        <div style="height:44px;display:flex;align-items:center;gap:12px;padding:0 12px;">
+          <span style="width:80px;flex:none;">adb</span>
+          <span style="flex:1;min-width:0;font:12px 'SF Mono',ui-monospace,Menlo,monospace;color:rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">~/Library/Android/sdk/platform-tools/adb</span>
+          <span style="flex:none;font-size:11px;font-weight:500;color:#1E8A3C;background:rgba(52,199,89,0.15);border-radius:4px;padding:1px 6px;">Auto-detected</span>
+          <div style="height:22px;padding:0 10px;border-radius:5px;background:#FFFFFF;box-shadow:0 0 0 0.5px rgba(0,0,0,0.2),0 0.5px 1px rgba(0,0,0,0.1);display:flex;align-items:center;">Choose…</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:rgba(0,0,0,0.55);margin-top:8px;padding:0 4px;text-wrap:pretty;">Keep paths free of spaces — the export path is passed to Claude / Codex as a command argument.</div>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

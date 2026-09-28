@@ -1,0 +1,19 @@
+{
+  "size": [1080, 2400],
+  "created": "2026-09-24T18:15:42+08:00",
+  "timeZone": "Asia/Shanghai",
+  "facts": {
+    "serial": "37091JEHN",
+    "model": "Pixel 7",
+    "densityDpi": 420,
+    "activity": "com.stickermobi.avatarmaker/.ui.task.TaskCenterActivity",
+    "hierarchy": "golden-hierarchy.xml"
+  },
+  "figmaURL": "https://www.figma.com/design/pw7H7us12aHi2IqHDi0bdm/Neku?node-id=128-22976",
+  "refs": 2,
+  "marks": [
+    { "rect": [96, 412, 888, 180], "note": "黄色选中态应该比紫色底更高，现在两者一样高。" },
+    { "rect": [675, 2266, 0, 0], "note": "这个 icon 比设计稿明显偏大。" },
+    { "rect": [900, 40, 0, 0], "note": "状态栏右侧电量图标被裁掉了一半。\n多行描述原样保留。" }
+  ]
+}

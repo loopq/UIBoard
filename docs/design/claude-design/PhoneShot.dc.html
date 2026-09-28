@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="position:relative;width:calc(1080px * var(--s, 0.285));height:calc(2400px * var(--s, 0.285));overflow:hidden;">
+<div style="position:absolute;left:0;top:0;width:1080px;height:2400px;transform:scale(var(--s, 0.285));transform-origin:0 0;background:#F7F4FE;font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif;color:#1C1B2E;overflow:hidden;">
+  <div style="position:absolute;left:60px;top:30px;font-size:40px;font-weight:600;letter-spacing:0.5px;">9:41</div>
+  <div style="position:absolute;right:60px;top:34px;display:flex;align-items:center;gap:18px;">
+    <div style="display:flex;align-items:flex-end;gap:6px;height:30px;">
+      <div style="width:8px;height:12px;background:#1C1B2E;border-radius:2px;"></div>
+      <div style="width:8px;height:18px;background:#1C1B2E;border-radius:2px;"></div>
+      <div style="width:8px;height:24px;background:#1C1B2E;border-radius:2px;"></div>
+      <div style="width:8px;height:30px;background:#1C1B2E;border-radius:2px;"></div>
+    </div>
+    <div style="width:62px;height:30px;border:4px solid #1C1B2E;border-radius:9px;box-sizing:border-box;padding:3px;"><div style="width:75%;height:100%;background:#1C1B2E;border-radius:3px;"></div></div>
+  </div>
+  <div style="position:absolute;left:60px;top:122px;width:150px;height:150px;border-radius:75px;background:#FFC7D8;overflow:hidden;">
+    <div style="position:absolute;left:45px;top:30px;width:60px;height:60px;border-radius:30px;background:#FFF0F4;"></div>
+    <div style="position:absolute;left:20px;top:102px;width:110px;height:110px;border-radius:55px;background:#FFF0F4;"></div>
+  </div>
+  <div style="position:absolute;left:{{ titleLeft }}px;top:136px;">
+    <div style="font-size:60px;font-weight:600;letter-spacing:-0.5px;">Neku Studio</div>
+    <div style="font-size:38px;color:#8A8799;margin-top:6px;">12.4k followers</div>
+  </div>
+  <div style="position:absolute;left:900px;top:137px;width:120px;height:120px;border-radius:60px;background:#ECE6FD;display:flex;align-items:center;justify-content:center;color:#7B5CF6;">
+    <svg width="56" height="56" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+  </div>
+  <div style="position:absolute;left:64px;top:350px;width:952px;height:100px;border-radius:50px;background:#7B5CF6;"></div>
+  <div style="position:absolute;left:{{ yLeft }}px;top:{{ yTop }}px;width:476px;height:{{ yH }}px;border-radius:64px;background:#FFD43B;"></div>
+  <div style="position:absolute;left:64px;top:350px;width:476px;height:100px;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:600;color:{{ rewardsColor }};">Rewards</div>
+  <div style="position:absolute;left:540px;top:350px;width:476px;height:100px;display:flex;align-items:center;justify-content:center;font-size:44px;font-weight:600;color:{{ bonusColor }};">Bonus</div>
+  <div style="position:absolute;left:64px;top:520px;width:952px;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
+    <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+      <div style="height:520px;border-radius:36px;background:#FFFFFF;overflow:hidden;">
+        <div style="position:relative;height:380px;background:{{ c.bg }};overflow:hidden;">
+          <div style="position:absolute;left:165px;top:74px;width:130px;height:130px;border-radius:65px;background:rgba(255,255,255,0.72);"></div>
+          <div style="position:absolute;left:80px;top:244px;width:300px;height:300px;border-radius:150px;background:rgba(255,255,255,0.72);"></div>
+        </div>
+        <div style="padding:26px 32px;">
+          <div style="font-size:42px;font-weight:600;">{{ c.title }}</div>
+          <div style="font-size:34px;color:#8A8799;margin-top:8px;">♥ {{ c.likes }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="position:absolute;left:0;top:2180px;width:1080px;height:220px;background:#FFFFFF;border-top:2px solid #EEEAF6;display:grid;grid-template-columns:repeat(4,1fr);box-sizing:border-box;">
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:38px;gap:8px;color:#7B5CF6;">
+      <svg width="72" height="72" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z"></path></svg>
+      <div style="font-size:32px;font-weight:500;">Home</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:38px;gap:8px;color:#8A8799;">
+      <svg width="72" height="72" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="12" r="9.5"></circle><path d="m15.5 8.5-2 5-5 2 2-5Z"></path></svg>
+      <div style="font-size:32px;">Explore</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:38px;gap:8px;color:#8A8799;">
+      <svg width="72" height="72" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><rect x="3" y="3" width="18" height="18" rx="4"></rect><path d="M12 8v8M8 12h8"></path></svg>
+      <div style="font-size:32px;">Create</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;padding-top:38px;gap:8px;color:#8A8799;">
+      <svg width="72" height="72" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><circle cx="12" cy="8" r="4"></circle><path d="M4 21a8 8 0 0 1 16 0"></path></svg>
+      <div style="font-size:32px;">Me</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:432px;top:2366px;width:216px;height:12px;border-radius:6px;background:#1C1B2E;"></div>
+
+  <sc-for list="{{ boxes }}" as="b" hint-placeholder-count="0">
+    <div style="position:absolute;left:{{ b.left }}px;top:{{ b.top }}px;width:{{ b.w }}px;height:{{ b.h }}px;border:{{ b.bw }}px solid {{ b.color }};box-sizing:border-box;"></div>
+    <div style="position:absolute;left:{{ b.bx }}px;top:{{ b.by }}px;width:54px;height:54px;border-radius:27px;border:4px solid #FFFFFF;box-sizing:border-box;background:{{ b.color }};color:#FFFFFF;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;">{{ b.n }}</div>
+  </sc-for>
+  <sc-for list="{{ pins }}" as="p" hint-placeholder-count="0">
+    <div style="position:absolute;left:{{ p.lx }}px;top:{{ p.ly }}px;width:{{ p.len }}px;height:{{ p.lw }}px;background:{{ p.color }};transform:rotate({{ p.ang }}deg);transform-origin:0 50%;"></div>
+    <div style="position:absolute;left:{{ p.left }}px;top:{{ p.top }}px;width:26px;height:26px;border-radius:13px;border:{{ p.rw }}px solid {{ p.color }};box-sizing:border-box;"></div>
+    <div style="position:absolute;left:{{ p.bx }}px;top:{{ p.by }}px;width:54px;height:54px;border-radius:27px;border:4px solid #FFFFFF;box-sizing:border-box;background:{{ p.color }};color:#FFFFFF;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;">{{ p.n }}</div>
+  </sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:308,&quot;height&quot;:684},&quot;set&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;main&quot;,&quot;h2&quot;,&quot;h3&quot;,&quot;h4&quot;,&quot;h5&quot;],&quot;default&quot;:&quot;main&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;sel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;0&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;bug&quot;,&quot;design&quot;,&quot;design2&quot;],&quot;default&quot;:&quot;bug&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const C = ['#FF3B30', '#0A84FF', '#AF52DE', '#FF9500', '#34C759', '#FF2D55'];
+    const SETS = {
+      main: [{ t: 'box', x: 36, y: 108, w: 674, h: 178 }, { t: 'box', x: 44, y: 322, w: 992, h: 156 }, { t: 'pin', x: 675, y: 2256 }],
+      h2: [{ t: 'box', x: 44, y: 500, w: 992, h: 560 }],
+      h3: [{ t: 'pin', x: 405, y: 2256 }, { t: 'box', x: 50, y: 1056, w: 489, h: 548 }],
+      h4: [{ t: 'box', x: 830, y: 24, w: 206, h: 60 }, { t: 'box', x: 50, y: 1606, w: 489, h: 548 }, { t: 'pin', x: 135, y: 200 }],
+      h5: [{ t: 'box', x: 44, y: 322, w: 992, h: 156 }]
+    };
+    const set = SETS[this.props.set] || [];
+    const sel = parseInt(this.props.sel ?? '0', 10);
+    const boxes = [], pins = [];
+    set.forEach((a, i) => {
+      const n = i + 1, color = C[i % 6], on = n === sel;
+      if (a.t === 'box') {
+        boxes.push({ n, color, bw: on ? 8 : 4, left: a.x, top: a.y, w: a.w, h: a.h, bx: a.x - 27, by: a.y - 27 });
+      } else {
+        const r = 13, dx = 96, dy = -96, d = Math.hypot(dx, dy), lw = on ? 6 : 3;
+        pins.push({
+          n, color, rw: on ? 8 : 4, left: a.x - r, top: a.y - r,
+          lx: a.x + dx / d * r, ly: a.y + dy / d * r - lw / 2, lw, len: d - r - 27,
+          ang: Math.atan2(dy, dx) * 180 / Math.PI, bx: a.x + dx - 27, by: a.y + dy - 27
+        });
+      }
+    });
+    const v = this.props.variant || 'bug';
+    const design = v !== 'bug', bonus = v === 'design2';
+    return {
+      boxes, pins,
+      titleLeft: design ? 234 : 350,
+      yLeft: bonus ? 540 : 64,
+      yTop: design ? 336 : 350,
+      yH: design ? 128 : 100,
+      rewardsColor: bonus ? '#FFFFFF' : '#3B2A00',
+      bonusColor: bonus ? '#3B2A00' : '#FFFFFF',
+      cards: [
+        { title: 'Summer Look', likes: '2.1k', bg: '#FFE0EA' },
+        { title: 'Street Style', likes: '864', bg: '#E0EEFF' },
+        { title: 'Cozy Knit', likes: '1.3k', bg: '#E3F6E6' },
+        { title: 'Beach Day', likes: '527', bg: '#FFF3D6' },
+        { title: 'Night Out', likes: '3.8k', bg: '#ECE3FF' },
+        { title: 'School Fit', likes: '942', bg: '#DDF5F1' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

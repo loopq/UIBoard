@@ -1,0 +1,62 @@
+---
+name: ui-review
+description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-MM-DD/HH-mm-ss，含 review.md 且 format 为 uiboard-review/1），把每个 #N 问题关联到当前仓库的模块文件（Activity / Fragment / layout / view id），先产出关联表与修复 plan，确认后再改代码。触发：/ui-review <path>、$ui-review <path>，或用户贴出 UIReview 目录路径要求修 UI。
+---
+
+# UI Review → 模块文件关联与修复
+
+## 输入
+
+- 一个或多个 review 目录路径（可带引号）。review 目录是只读输入，禁止在里面写任何文件。
+- 先读 `review.md` frontmatter：`format` 必须是 `uiboard-review/1`，主版本不认识就停下报告。
+- 字段含义见 `references/review-format.md`。
+
+## 读取顺序（控制视觉 token）
+
+1. `review.md` 全文。
+2. `annotated.png` 看一次，建立各 #N 的整体位置感。
+3. 每个 #N 看 `crops/N.png`（原分辨率），细节判断以 crop 为准。
+4. `ref-*.png` 只作为正确结果参考。
+5. `runtime.png` 只在 crop 不够时看。
+6. `hierarchy.xml` 只在需要邻近节点时用 `rg` 按 bounds 或 id 查，不整篇读入。
+
+## 坐标
+
+- `rect: x,y,w,h` 是 runtime.png 像素，原点左上；`w=h=0` 是点。
+- 有 `dp` 行时直接拿它和 layout / Figma 的 dp 值比较；没有 `dp` 行说明截图不是 ADB 来源，不要假设 density。
+- `crop: 路径 @ ox,oy` 中 `ox,oy` 是 crop 左上角在 runtime 中的坐标。
+- Pin 的引线只是连接线，不代表移动方向。
+
+## 关联模块文件（每个 #N，按证据强度依次尝试，命中即停）
+
+1. `views`：取 resource-id 的 name → `rg -n '@\+id/<name>\b' --glob '**/res/layout*/**'` → layout 文件:行 → 找引用该 layout 的类（`R.layout.<layout>` 或 `<LayoutCamel>Binding`）→ 在类中找该 view 的使用（`binding.<nameCamel>` / `R.id.<name>`）。
+2. `activity`：定位 Activity 类文件，结合 crop 可见内容锁定其 Fragment / Adapter / 子布局。
+3. crop 中的可见文案：`rg` 字符串资源的 value → `@string/<name>` / `R.string.<name>` 的使用处。
+4. 以上都没有：按视觉结构与页面语义搜索，置信度标「推测」。
+
+resource-id 或 activity 属于第三方包（广告 SDK 等）时标注「非本仓代码」，不改。
+
+## 产出
+
+先输出关联表：
+
+| # | 问题摘要 | 证据 | 文件:行 | 置信度（确定/高/推测） | 根因假设 |
+|---|---|---|---|---|---|
+
+然后：
+
+- 当前仓库的 AGENTS.md / CLAUDE.md 要求先出 plan：按该仓库的文档路由写 plan，标题下一行固定为 `**UI Review**: file://<review 目录绝对路径>`，写完停下等确认。
+- 否则：按 #N 顺序直接修改。
+
+## 修复原则
+
+- 用户只指出哪里不对，描述里不包含解法；精确值来自 ref、Figma 与现有代码。
+- frontmatter 有 `figma` 且 Figma MCP 可用时，按 node 读取精确尺寸；大帧先 get_metadata + get_screenshot，不要直接对整帧取 design context。
+- 修布局 / 组件的根因，不加任意 offset；共享组件确实是根因时才改共享组件。
+- 只改与各 #N 相关的代码。
+
+## 验证与收尾
+
+- 按当前仓库规则执行编译验证（如 Android 项目的 assemble 命令）。
+- 按 #N 汇总：文件:行、改了什么、为什么；列出需要用户真机复验的点。
+- 复验方式：用户重新截图并导出新的 review；不回写旧目录。
