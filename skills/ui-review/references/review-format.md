@@ -118,7 +118,7 @@ frames:
 未选中状态下 Tab 文字颜色太浅。
 ```
 
-- 帧用字母 A、B、C 标识，从左到右横排、顶对齐；帧之间与短帧下方是灰色填充 `#E5E5EA`。
+- 帧用字母 A、B、C 标识（Z 之后是 AA、AB…），从左到右横排、顶对齐；帧之间与短帧下方是灰色填充 `#E5E5EA`。
 - 顶层 `size` 是拼图尺寸；每帧的 `offset` / `size` 是它在拼图中的位置与原始尺寸。设备相关行（`source/device/density/activity/hierarchy`）按帧给出，缺失就省略。
 - 问题编号在整个画板内连续；每个问题多一行 `frame`，其 `rect`、`crop` 原点、`views` bounds 都是**帧内**像素。在拼图 / annotated.png 中的位置 = 该帧 `offset` + 帧内坐标。
 - `dp` 用该帧的 density 换算，`views` 用该帧的 `hierarchy-X.xml` 命中；帧没有设备信息时这两行不出现。

@@ -12,6 +12,12 @@ final class BoardTests: XCTestCase {
         XCTAssertEqual(BoardLayout.size(for: [sizes[0]]), sizes[0])
     }
 
+    func testFrameLabelsContinuePastZWithoutRepeating() {
+        XCTAssertEqual([0, 1, 25, 26, 27, 51, 52, 701, 702].map(Frame.label(at:)),
+                       ["A", "B", "Z", "AA", "AB", "AZ", "BA", "ZZ", "AAA"])
+        XCTAssertEqual(Set((0..<800).map(Frame.label(at:))).count, 800)
+    }
+
     func testComposePlacesFrameBAtItsOffsetAndFillsGaps() throws {
         let a = solidImage(width: 100, height: 200, rgb: 0xFF0000)
         let b = solidImage(width: 100, height: 100, rgb: 0x0000FF)

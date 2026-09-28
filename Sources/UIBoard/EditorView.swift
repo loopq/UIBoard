@@ -51,8 +51,10 @@ struct EditorView: View {
             .help("Device")
             Menu {
                 Button("New Tab  ⌘⇧A") { Task { await model.capture(to: .newBoard) } }
-                Button("Add to This Board  ⌘⌥A") { Task { await model.capture(to: .currentBoard) } }
-                    .disabled(model.current == nil)
+                Button("Add to This Board  ⌘⌥A") {
+                    let destination = model.here
+                    Task { await model.capture(to: destination) }
+                }
             } label: {
                 Label("Capture", systemImage: "camera.viewfinder")
             } primaryAction: {

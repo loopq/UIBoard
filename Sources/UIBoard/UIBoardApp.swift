@@ -65,7 +65,10 @@ struct UIBoardCommands: Commands {
             Divider()
             Button("Capture to New Tab") { Task { await model.capture(to: .newBoard) } }
                 .keyboardShortcut("a", modifiers: [.command, .shift])
-            Button("Capture into This Board") { Task { await model.capture(to: .currentBoard) } }
+            Button("Capture into This Board") {
+                let destination = model.here
+                Task { await model.capture(to: destination) }
+            }
                 .keyboardShortcut("a", modifiers: [.command, .option])
             Button("Refresh Devices") { Task { await model.refreshDevices(prompt: true) } }
                 .keyboardShortcut("r")

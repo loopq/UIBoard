@@ -31,24 +31,27 @@ struct BoardFrame: Identifiable {
 struct Board: Identifiable {
     let id = UUID()
     let number: Int
-    var frames: [BoardFrame] { didSet { exportedURL = nil } }
-    var marks: [Mark] = [] { didSet { exportedURL = nil } }
-    var refs: [CGImage] = [] { didSet { exportedURL = nil } }
-    var figmaURL = "" { didSet { exportedURL = nil } }
+    var frames: [BoardFrame] { didSet { revision += 1 } }
+    var marks: [Mark] = [] { didSet { revision += 1 } }
+    var refs: [CGImage] = [] { didSet { revision += 1 } }
+    var figmaURL = "" { didSet { revision += 1 } }
     var selected: Int?
-    var exportedURL: URL?
+    private(set) var revision = 0
+    var exportedRevision: Int?
+
+    var isExported: Bool { exportedRevision == revision }
 
     var title: String {
         guard let activity = frames.first?.facts?.activity else { return "Screen \(number)" }
         return String(activity.split(separator: "/").last?.split(separator: ".").last ?? Substring(activity))
     }
 
-    var isDirty: Bool { !marks.isEmpty && exportedURL == nil }
+    var isDirty: Bool { !marks.isEmpty && !isExported }
 }
 
 enum Destination {
     case newBoard
-    case currentBoard
+    case board(UUID)
 }
 
 enum PendingRemoval {
@@ -95,6 +98,8 @@ final class EditorModel {
     var canExport: Bool { current.map { !$0.marks.isEmpty } == true && !isExporting }
     var dirtyCount: Int { boards.filter(\.isDirty).count }
     var selectedDevice: AdbDevice? { devices.first { $0.id == selectedSerial } }
+    /// Resolve "this board" when an action starts, so async work can't land on a tab switched to later.
+    var here: Destination { currentID.map(Destination.board) ?? .newBoard }
 
     func updateCurrent(_ body: (inout Board) -> Void) {
         guard let index = currentIndex else { return }
@@ -117,7 +122,7 @@ final class EditorModel {
 
     func add(_ images: [(CGImage, Task<DeviceFacts, Never>?)], to destination: Destination) {
         guard !images.isEmpty else { return }
-        if destination == .currentBoard, let index = currentIndex {
+        if case let .board(id) = destination, let index = boards.firstIndex(where: { $0.id == id }) {
             let start = boards[index].frames.count
             boards[index].frames += images.map(makeFrame)
             let labels = (start..<boards[index].frames.count).map(Frame.label(at:)).joined(separator: ", ")
@@ -160,11 +165,12 @@ final class EditorModel {
         do { add(try items.map { (try ImageIngest.decode($0), nil) }, to: destination) } catch { report(error) }
     }
 
-    func addRefs(_ items: [Data]) {
-        guard currentIndex != nil else { return open(items, to: .newBoard) }
+    func addRefs(_ items: [Data], to destination: Destination) {
+        guard case let .board(id) = destination, let index = boards.firstIndex(where: { $0.id == id }) else {
+            return open(items, to: .newBoard)
+        }
         do {
-            let images = try items.map(ImageIngest.decode)
-            updateCurrent { $0.refs += images }
+            boards[index].refs += try items.map(ImageIngest.decode)
         } catch {
             report(error)
         }
@@ -174,7 +180,7 @@ final class EditorModel {
         if current == nil {
             open([data], to: .newBoard)
         } else {
-            addRefs([data])
+            addRefs([data], to: here)
             show("Added as reference \(current?.refs.count ?? 0)")
         }
     }
@@ -185,7 +191,7 @@ final class EditorModel {
 
     func pasteFrame() {
         guard let data = ImageSource.pasteboardImage() else { return show("No image on the clipboard") }
-        open([data], to: .currentBoard)
+        open([data], to: here)
     }
 
     func select(board id: UUID) {
@@ -340,7 +346,7 @@ final class EditorModel {
         let workspace = Prefs.workspaceURL
         do {
             let url = try await Task.detached { try ReviewExporter.export(review, workspace: workspace, now: Date()) }.value
-            if let i = boards.firstIndex(where: { $0.id == board.id }) { boards[i].exportedURL = url }
+            if let i = boards.firstIndex(where: { $0.id == board.id }) { boards[i].exportedRevision = snapshot.revision }
             exportedURL = url
             lastExport = url
         } catch {

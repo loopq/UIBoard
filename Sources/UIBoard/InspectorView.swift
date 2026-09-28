@@ -157,7 +157,10 @@ private struct ReferencesSection: View {
                             model.updateCurrent { if $0.refs.indices.contains(index) { $0.refs.remove(at: index) } }
                         }
                     }
-                    Button { model.addRefs(ImageSource.open(multiple: true)) } label: {
+                    Button {
+                        let destination = model.here
+                        model.addRefs(ImageSource.open(multiple: true), to: destination)
+                    } label: {
                         Image(systemName: "plus")
                             .font(.system(size: 16))
                             .frame(width: 64, height: 142)
@@ -186,7 +189,8 @@ private struct ReferencesSection: View {
             .padding(.top, 4)
         }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
-            Task { model.addRefs(await ImageSource.load(providers)) }
+            let destination = model.here
+            Task { model.addRefs(await ImageSource.load(providers), to: destination) }
             return true
         }
     }

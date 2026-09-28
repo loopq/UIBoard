@@ -43,7 +43,14 @@ public struct Frame {
     public var size: CGSize { CGSize(width: image.width, height: image.height) }
 
     public static func label(at index: Int) -> String {
-        String(UnicodeScalar(UInt8(65 + index % 26)))
+        var n = index + 1
+        var label = ""
+        while n > 0 {
+            n -= 1
+            label = String(UnicodeScalar(UInt8(65 + n % 26))) + label
+            n /= 26
+        }
+        return label
     }
 }
 

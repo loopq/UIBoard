@@ -23,7 +23,7 @@
 | ⌘V | 没有标签时新建标签；有标签时加为当前画板的参考图（保持 V1） |
 | Capture 默认 | ⌘⇧A / 点击 Capture 主体 = 新标签；⌘⌥A / Capture 下拉「Add to This Board」= 追加帧 |
 | 追加入口 | 最后一帧右侧常驻虚线「+」格：点击弹出 Capture from Device / Import… / Paste Image，也接受拖入 |
-| 帧标记 | 用字母 A/B/C，刻意不用数字，避免和问题 #1 #2 混淆 |
+| 帧标记 | 用字母 A/B/C（Z 之后是 AA、AB…），刻意不用数字，避免和问题 #1 #2 混淆 |
 
 ## 3. 输入路由（唯一规则表）
 
@@ -152,11 +152,12 @@ frames:
 - [x] ~~`/apply-worktree main_frames`~~ 未用 worktree（见下方记录）；`swift build && swift test && scripts/bundle.sh` 通过。
 
   执行记录（2026-09-28）：
-  - Codex 两次派发都异常退出（第一次跑到一半、第二次立即退出），连最简单的只读探测都没有输出；同一会话里 Codex CLI 从 0.156.1 自动升级到了 0.157.1，推测是升级导致 `ask_codex.sh` 包装脚本失效。空的 `main_frames` worktree 已清理，Core lane 改由 Claude 在 main 上完成。
+  - Codex 两次派发都异常退出（第一次跑到一半、第二次立即退出），连最简单的只读探测都没有输出；事后确认原因是官方额度耗尽（不是 CLI 升级），之后改用 `cxd-third` profile 调用。空的 `main_frames` worktree 已清理，Core lane 改由 Claude 在 main 上完成。
   - 26 个测试通过（新增 `BoardTests` 5 个：BoardLayout、拼图偏移与空隙色、按帧渲染与全局编号、v2 golden 逐字节、多帧导出目录）；v1 golden 不变。
   - 调试钩子端到端（钩子已删除，不入库）：2 个标签（其中一个 2 帧、3 个标注）→ 导出为 v2（拼图 2225×2400，编号 A:#1 #3、B:#2）→ 标签显示 ✓；导出后再修改会自动清除 ✓；关闭有未导出标注的标签、删除带标注的帧都会弹确认；删除 B 帧后，它的标注被删、其余标注的帧号正确；菜单只剩一个 ⌘W（Close Tab）。
   - 端到端中发现并修复：帧头被 `Spacer` 撑宽，和帧不对齐（改成固定为帧宽）；`borderlessButton` 样式的 Menu 会把「+」格压成一行文字（改为 `.menuStyle(.button)` + `.buttonStyle(.plain)`）。
 - [x] 临时调试钩子端到端（验证后删除）：2 个标签，其中一个 2 帧，每帧都有标注；截图检查标签栏、画板、导出目录与 v2 review.md。
+- [x] Codex 审查（cxd-third）：4 条全部成立并已修复，详见 [review](file:///Users/loopq/dev/git/loopq/uiboard/docs/reviews/2026-09-28-uiboard-boards-frames-review.md)。
 - [ ] 用户真机：⌘⇧A 新标签、⌘⌥A 追加、「+」格、关闭确认、导出后跑 `/ui-review`。
 - [x] `scripts/install-app.sh` 更新「应用程序」里的版本。
 
@@ -171,7 +172,7 @@ frames:
 
 ## 8. 已知天花板
 
-- 帧最多 26 个（A–Z），实际验收远用不到。
+- 帧数量不设上限：标签按 A…Z、AA、AB… 递增（Codex 审查发现原先的 A–Z 循环会导致重名）。
 - 所有画板都在内存里：一帧 1440×3120 解码后约 18MB，20 帧约 360MB；退出前未导出的画板不会持久化（有退出确认兜底）。如果需要跨重启保留，再加草稿落盘。
 - 不同设备的帧按原始像素并排，分辨率不同时视觉比例不一致；同一设备的状态对比不受影响。
 - 帧不支持拖动排序；需要时再加。

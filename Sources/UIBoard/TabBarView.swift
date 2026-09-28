@@ -55,7 +55,7 @@ private struct TabChip: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
                 .frame(maxWidth: 170, alignment: .leading)
-            if board.exportedURL != nil {
+            if board.isExported {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 12))
                     .foregroundStyle(.green)

@@ -35,7 +35,8 @@ struct CanvasView: View {
         .overlay(alignment: .bottom) { toast }
         .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 3) } }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
-            Task { model.open(await ImageSource.load(providers), to: .currentBoard) }
+            let destination = model.here
+            Task { model.open(await ImageSource.load(providers), to: destination) }
             return true
         }
     }
@@ -148,8 +149,11 @@ private struct AddFrameSlot: View {
 
     var body: some View {
         Menu {
-            Button("Capture from Device") { Task { await model.capture(to: .currentBoard) } }
-            Button("Import…") { model.importImages(to: .currentBoard) }
+            Button("Capture from Device") {
+                let destination = model.here
+                Task { await model.capture(to: destination) }
+            }
+            Button("Import…") { model.importImages(to: model.here) }
             Button("Paste Image") { model.pasteFrame() }
         } label: {
             VStack(spacing: 6) {
