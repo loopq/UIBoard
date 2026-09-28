@@ -18,6 +18,8 @@ scripts/bundle.sh        # 产出 build/UIBoard.app
 
 调试运行：`swift run UIBoard`，或直接打开 `build/UIBoard.app`。
 
+安装 / 更新到「应用程序」：`scripts/install-app.sh`（先退出正在运行的 UIBoard；脚本会重新打包并覆盖 `/Applications/UIBoard.app`）。
+
 ## 目录归属（并行 lane）
 
 | 目录 | 归属 |
