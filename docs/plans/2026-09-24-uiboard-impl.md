@@ -20,7 +20,7 @@
 | Pin / Rectangle / Arrow 三工具 | 单工具：点击 = Pin，拖拽 = 框；删除 Arrow | 数据统一为 rect；零工具切换；Arrow 的方向歧义彻底消失 |
 | Ref A / Ref B 两个固定槽 | `refs` 列表，导出 `ref-1.png…` | 消除「只有一张就只存 A」的特殊情况 |
 | App 不碰代码上下文 | ADB 截图时额外记录 density / 前台 Activity / uiautomator 视图树，App 做坐标命中测试 | App 仍不索引代码，只在唯一可能的时刻记录运行时事实；全部可选、失败不阻塞 |
-| ⌘V 语义未定义 | 文本框聚焦 → 粘贴文本；无 runtime → 设为 runtime；已有 runtime → 追加为 ref | 一个手势三个去处必须定死 |
+| ⌘V 语义未定义 | 文本框聚焦且剪贴板有文字 → 粘贴文字；否则剪贴板有图片时：无 runtime → 设为 runtime，已有 runtime → 追加为 ref | 一个手势三个去处必须定死；Figma「Copy as PNG」与系统截图的剪贴板里只有图片，写完描述后直接 ⌘V 也能粘参考图 |
 | Skill 按 #1#2#3 直接改代码 | Skill 先产出「关联表 + plan」，遵守目标仓库 plan-first 与编译验证规则 | 与 Avatar-Android 仓库工作流一致 |
 | Skill 放 `/ui-review` | 单一源在本仓 `skills/ui-review/`，symlink 到 `~/.claude/skills` 与 `~/.codex/skills` | Claude `/ui-review`、Codex `$ui-review` 共用一份，避免两份副本漂移 |
 | Phase 6 才做 Skill | T0 先用手工 review 目录验证 Skill | 最大风险前置；契约冻结后 Codex / Claude 才能并行 |
@@ -43,7 +43,7 @@
 | 设备 → App | `screencap` 输出数 MB，先 `waitUntilExit` 后读管道会死锁 | 进程封装先并发读完 stdout/stderr 再等退出，带超时 kill（C2） |
 | 设备 → App | 设备 `unauthorized` / `offline`、记住的 serial 不在线 | 设备菜单显示状态并禁用；serial 不在线时不自动切换，单设备且无记忆时自动选中（U3） |
 | 截图 → 标注 | 新截图 / 粘贴 / 拖入静默覆盖已有标注 | 已有标注时替换 runtime 必须确认（U2） |
-| 截图 → 标注 | 在描述框里 ⌘V 被当成粘贴图片 | 本地事件监听：first responder 是文本编辑器时放行（U2） |
+| 截图 → 标注 | 在描述框里 ⌘V 被当成粘贴图片 | 本地事件监听：first responder 是文本编辑器且剪贴板有文字时放行（U2） |
 | 标注 → 导出 | 描述为空的 #N 交给 AI 无意义 | 有空描述时阻止导出，并聚焦第一张空卡片（U3） |
 | 标注 → 导出 | 写到一半的目录被 History / Skill 读到 | 先写 `.HH-mm-ss.tmp/` 再 rename；History 忽略点目录（C1 / C3） |
 | 标注 → 导出 | 同一秒导出两次 | 目录名冲突时追加 `-2`、`-3`（C1） |
@@ -236,7 +236,7 @@ Pin 用 2×2 rect 后，IoU 自动偏向包含该点的最小节点，与框共�
 ## 6. Codex / Claude 并行方式
 
 - T0 串行，在主 checkout 由 Claude 完成（契约设计 + 真机 spike 需要和用户交互）。
-- T0 验收通过后，用 `/create-worktree` 开两个 worktree，两个 agent 同时跑：
+- T0 验收通过后，Core lane 用 `/create-worktree main core` 开 worktree（`main_core`）交给 Codex；UI lane 由 Claude 直接在 main 上做（目录不重叠，少一次合入）。两个 agent 同时跑：
 
 | Lane | 执行者 | 独占目录 | 任务 |
 |---|---|---|---|
