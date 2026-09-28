@@ -1,6 +1,8 @@
-# UIBoard Review 目录格式 v1
+# UIBoard Review 目录格式
 
-`format: uiboard-review/1`。主版本变化 = 破坏性变更，读取方遇到不认识的主版本必须停下。
+- `format: uiboard-review/1`：单张截图（下文 v1 各节）。
+- `format: uiboard-review/2`：一个画板里横排多张截图（帧），见文末「多帧（v2）」一节。
+- 读取方遇到不认识的主版本必须停下。
 
 ## 目录
 
@@ -75,6 +77,51 @@ score = area(q ∩ b) / area(q ∪ b)
 ```
 
 对 Pin 来说，排第一的是包含该点的最小带 id 节点。铺满窗口的容器不参与命中（它们不提供位置信息）；所以 `views` 缺失可能意味着目标节点本身没有 resource-id，此时按 activity + 可见文案定位，也可以按 rect 在 `hierarchy.xml` 里查同位置节点的 `text` / `content-desc`。
+
+## 多帧（v2）
+
+一个画板里有 2 张及以上截图（例如同一页面的两个状态）时导出为 v2；只有 1 张时仍是 v1，逐字不变。
+
+```text
+review.md · runtime.png（整板拼图，无标注）· annotated.png（整板拼图 + 标注）· crops/N.png · ref-N.png · hierarchy-A.xml …
+```
+
+```markdown
+---
+format: uiboard-review/2
+created: 2026-09-24T18:15:42+08:00
+image: runtime.png
+size: 2225x2400
+refs: [ref-1.png]
+frames:
+  - frame: A
+    offset: 0,0
+    size: 1080x2400
+    source: adb
+    device: Pixel 7 (37091JEHN)
+    density: 420
+    activity: com.stickermobi.avatarmaker/.ui.task.TaskCenterActivity
+    hierarchy: hierarchy-A.xml
+  - frame: B
+    offset: 1145,0
+    size: 1080x2400
+---
+
+# UI Review
+
+## #2
+
+- frame: B
+- rect: 540,1200,0,0
+- crop: crops/2.png @ 432,1092
+
+未选中状态下 Tab 文字颜色太浅。
+```
+
+- 帧用字母 A、B、C 标识，从左到右横排、顶对齐；帧之间与短帧下方是灰色填充 `#E5E5EA`。
+- 顶层 `size` 是拼图尺寸；每帧的 `offset` / `size` 是它在拼图中的位置与原始尺寸。设备相关行（`source/device/density/activity/hierarchy`）按帧给出，缺失就省略。
+- 问题编号在整个画板内连续；每个问题多一行 `frame`，其 `rect`、`crop` 原点、`views` bounds 都是**帧内**像素。在拼图 / annotated.png 中的位置 = 该帧 `offset` + 帧内坐标。
+- `dp` 用该帧的 density 换算，`views` 用该帧的 `hierarchy-X.xml` 命中；帧没有设备信息时这两行不出现。
 
 ## annotated.png 上的标记
 

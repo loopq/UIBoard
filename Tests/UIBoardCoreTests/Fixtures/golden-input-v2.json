@@ -1,0 +1,24 @@
+{
+  "created": "2026-09-24T18:15:42+08:00",
+  "timeZone": "Asia/Shanghai",
+  "frames": [
+    {
+      "size": [1080, 2400],
+      "facts": {
+        "serial": "37091JEHN",
+        "model": "Pixel 7",
+        "densityDpi": 420,
+        "activity": "com.stickermobi.avatarmaker/.ui.task.TaskCenterActivity",
+        "hierarchy": "golden-hierarchy.xml"
+      }
+    },
+    { "size": [1080, 2400] }
+  ],
+  "figmaURL": "https://www.figma.com/design/pw7H7us12aHi2IqHDi0bdm/Neku?node-id=128-22976",
+  "refs": 1,
+  "marks": [
+    { "frame": 0, "rect": [96, 412, 888, 180], "note": "黄色选中态应该比紫色底更高，现在两者一样高。" },
+    { "frame": 1, "rect": [540, 1200, 0, 0], "note": "未选中状态下 Tab 文字颜色太浅。" },
+    { "frame": 0, "rect": [675, 2266, 0, 0], "note": "这个 icon 比设计稿明显偏大。" }
+  ]
+}

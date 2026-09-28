@@ -12,8 +12,28 @@ public enum ImageIngest {
 }
 
 public enum AnnotationRenderer {
-    public static func render(runtime: CGImage, marks: [Mark], highlight: Int?) -> CGImage? {
-        AnnotationDrawing.render(runtime: runtime, marks: marks, highlight: highlight)
+    public static func render(runtime: CGImage, marks: [Mark], frame: Int = 0, highlight: Int?) -> CGImage? {
+        AnnotationDrawing.render(runtime: runtime, marks: marks, frame: frame, highlight: highlight)
+    }
+}
+
+public enum BoardLayout {
+    public static func gap(for sizes: [CGSize]) -> CGFloat {
+        round((sizes.map(\.width).max() ?? 0) * 0.06)
+    }
+
+    public static func offsets(for sizes: [CGSize]) -> [CGPoint] {
+        let gap = gap(for: sizes)
+        var x: CGFloat = 0
+        return sizes.map { size in
+            defer { x += size.width + gap }
+            return CGPoint(x: x, y: 0)
+        }
+    }
+
+    public static func size(for sizes: [CGSize]) -> CGSize {
+        let width = sizes.map(\.width).reduce(0, +) + gap(for: sizes) * CGFloat(max(sizes.count - 1, 0))
+        return CGSize(width: width, height: sizes.map(\.height).max() ?? 0)
     }
 }
 

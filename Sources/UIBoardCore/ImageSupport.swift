@@ -34,7 +34,7 @@ enum ImageCodec {
 }
 
 enum AnnotationDrawing {
-    static func render(runtime: CGImage, marks: [Mark], highlight: Int?) -> CGImage? {
+    static func render(runtime: CGImage, marks: [Mark], frame: Int = 0, highlight: Int?) -> CGImage? {
         let width = runtime.width
         let height = runtime.height
         guard width > 0, height > 0 else { return nil }
@@ -62,7 +62,7 @@ enum AnnotationDrawing {
         let pinOffset = round(CGFloat(width) * 0.089)
         let fontSize = round(badgeDiameter * 0.52)
 
-        for (index, mark) in marks.enumerated() {
+        for (index, mark) in marks.enumerated() where mark.frame == frame {
             let color = cgColor(Palette.rgb(at: index))
             let markLineWidth = highlight == index ? baseLineWidth * 2 : baseLineWidth
             let desiredBadgeCenter: CGPoint

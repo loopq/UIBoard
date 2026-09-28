@@ -4,10 +4,12 @@ import Foundation
 public struct Mark: Equatable {
     public var rect: CGRect
     public var note: String
+    public var frame: Int
 
-    public init(rect: CGRect, note: String = "") {
+    public init(rect: CGRect, note: String = "", frame: Int = 0) {
         self.rect = rect
         self.note = note
+        self.frame = frame
     }
 
     public var isPin: Bool { rect.size == .zero }
@@ -29,22 +31,42 @@ public struct DeviceFacts: Equatable {
     }
 }
 
-public struct Review {
-    public var runtime: CGImage
+public struct Frame {
+    public var image: CGImage
     public var facts: DeviceFacts?
+
+    public init(image: CGImage, facts: DeviceFacts? = nil) {
+        self.image = image
+        self.facts = facts
+    }
+
+    public var size: CGSize { CGSize(width: image.width, height: image.height) }
+
+    public static func label(at index: Int) -> String {
+        String(UnicodeScalar(UInt8(65 + index % 26)))
+    }
+}
+
+public struct Review {
+    public var frames: [Frame]
     public var marks: [Mark]
     public var refs: [CGImage]
     public var figmaURL: String
 
-    public init(runtime: CGImage, facts: DeviceFacts? = nil, marks: [Mark] = [], refs: [CGImage] = [], figmaURL: String = "") {
-        self.runtime = runtime
-        self.facts = facts
+    public init(frames: [Frame], marks: [Mark] = [], refs: [CGImage] = [], figmaURL: String = "") {
+        self.frames = frames
         self.marks = marks
         self.refs = refs
         self.figmaURL = figmaURL
     }
 
-    public var pixelSize: CGSize { CGSize(width: runtime.width, height: runtime.height) }
+    public init(runtime: CGImage, facts: DeviceFacts? = nil, marks: [Mark] = [], refs: [CGImage] = [], figmaURL: String = "") {
+        self.init(frames: [Frame(image: runtime, facts: facts)], marks: marks, refs: refs, figmaURL: figmaURL)
+    }
+
+    public var runtime: CGImage { frames[0].image }
+    public var facts: DeviceFacts? { frames[0].facts }
+    public var pixelSize: CGSize { frames[0].size }
 }
 
 public struct AdbDevice: Equatable, Identifiable {
