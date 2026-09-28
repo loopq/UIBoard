@@ -62,7 +62,7 @@ refs: [ref-1.png, ref-2.png]
 - `rect: x,y,w,h`：runtime.png 像素坐标，原点左上，整数。`w=h=0` 表示 Pin（点）。
 - `dp: x,y,w,h`：`px × 160 / density`，四舍五入保留 1 位小数。
 - `crop: 路径 @ ox,oy`：`ox,oy` 是 crop 左上角在 runtime 中的像素坐标。裁图范围 = rect 四周各外扩 `round(0.1 × 图宽)` 后与图片边界求交。
-- `views`：最多 3 个视图树节点，按命中度降序，`resource-id [类名 x,y,w,h]`，` · ` 分隔；类名取 class 最后一段；bounds 是 runtime 像素。
+- `views`：最多 3 个视图树节点，按命中度降序，`resource-id [类名 x,y,w,h]`，` · ` 分隔；类名取 class 最后一段；bounds 是 runtime 像素，且是**可见区域**（越出父容器的部分被裁掉）。
 - 描述：`## #N` 元数据列表之后的全部正文，原样保留，可以多行。
 
 ## 命中规则（views 是怎么来的）

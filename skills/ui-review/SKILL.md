@@ -26,10 +26,11 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 - 有 `dp` 行时直接拿它和 layout / Figma 的 dp 值比较；没有 `dp` 行说明截图不是 ADB 来源，不要假设 density。
 - `crop: 路径 @ ox,oy` 中 `ox,oy` 是 crop 左上角在 runtime 中的坐标。
 - Pin 的引线只是连接线，不代表移动方向。
+- `views` 的 bounds 是**可见区域**：越出父容器（translation、负 margin）的部分会被裁掉。拿它和 layout 尺寸比较时，以 layout 声明为准，被裁的差值本身就是线索。
 
 ## 关联模块文件（每个 #N，按证据强度依次尝试，命中即停）
 
-1. `views`：取 resource-id 的 name → `rg -n '@\+id/<name>\b' --glob '**/res/layout*/**'` → layout 文件:行 → 找引用该 layout 的类（`R.layout.<layout>` 或 `<LayoutCamel>Binding`）→ 在类中找该 view 的使用（`binding.<nameCamel>` / `R.id.<name>`）。
+1. `views`：取 resource-id 的 name → `rg -n '@\+id/<name>\b' --glob '**/res/layout*/**'` → layout 文件:行 → 找引用该 layout 的类（`R.layout.<layout>` 或 `<LayoutCamel>Binding`）→ 在类中找该 view 的使用（`binding.<nameCamel>` / `R.id.<name>`）。同一个 id 出现在多个 layout 时，选同时包含该 #N 其他命中 id（父容器）的那个 layout；仍有多个时再用 activity 所承载的页面链路（Activity → Fragment / ViewPager）排除。
 2. `activity`：定位 Activity 类文件，结合 crop 可见内容锁定其 Fragment / Adapter / 子布局。
 3. crop 中的可见文案：`rg` 字符串资源的 value → `@string/<name>` / `R.string.<name>` 的使用处。
 4. 以上都没有：按视觉结构与页面语义搜索，置信度标「推测」。
@@ -53,6 +54,7 @@ resource-id 或 activity 属于第三方包（广告 SDK 等）时标注「非�
 - 用户只指出哪里不对，描述里不包含解法；精确值来自 ref、Figma 与现有代码。
 - frontmatter 有 `figma` 且 Figma MCP 可用时，按 node 读取精确尺寸；大帧先 get_metadata + get_screenshot，不要直接对整帧取 design context。
 - 修布局 / 组件的根因，不加任意 offset；共享组件确实是根因时才改共享组件。
+- 图片尺寸类问题：先比较位图原始尺寸（px ÷ 所在密度桶倍率）与 layout 的 dp。两者相等时只改 View 尺寸会留白或拉伸，需要更大的资源或调整 scaleType。
 - 只改与各 #N 相关的代码。
 
 ## 验证与收尾

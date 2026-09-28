@@ -2,7 +2,7 @@
 
 **产品基线**: [原始方案](file:///Users/loopq/dev/git/loopq/uiboard/docs/plans/2026-09-24-uiboard-product.md) · **原型 Prompt**: [Claude Design](file:///Users/loopq/dev/git/loopq/uiboard/docs/plans/2026-09-24-uiboard-design-prompt.md)
 
-状态：实施中。T0（除真机项）、Lane Core、Lane UI、I1 已完成；待真机 spike（T0.4/T0.6）、S1、I2 与人工验收。仓库 `/Users/loopq/dev/git/loopq/uiboard`，remote `git@github.com:loopq/UIBoard.git`（push 由用户执行）。本文件自包含：契约、任务、验收、Skill 规格全部内联；产品基线只作为背景，凡与本文件冲突以本文件为准。
+状态：V1 已完成。T0–T0.6、Lane Core、Lane UI、S1、I1、I2、人工验收都已通过；唯一剩下的是 T0.4 里 Spine 编辑器（持续动画）下的 uiautomator 验证。仓库 `/Users/loopq/dev/git/loopq/uiboard`，remote `git@github.com:loopq/UIBoard.git`（push 由用户执行）。本文件自包含：契约、任务、验收、Skill 规格全部内联；产品基线只作为背景，凡与本文件冲突以本文件为准。
 
 ## 1. 核心判断
 
@@ -267,7 +267,7 @@ Pin 用 2×2 rect 后，IoU 自动偏向包含该点的最小节点，与框共�
   - `skills/ui-review/SKILL.md` 与 `agents/openai.yaml` 按第 8 节写入。
   - `scripts/install-skill.sh` 按第 8 节写入并执行；确认 `~/.claude/skills/ui-review`、`~/.codex/skills/ui-review` 均为指向本仓的 symlink。
   - `Tests/UIBoardCoreTests/Fixtures/golden-review.md`：与 5.4 示例同构的标准样例（C1 的 golden 测试对照它）。
-- [ ] T0.6 手工 review 目录 + 双 agent 试跑（最大风险验证）：
+- [x] T0.6 手工 review 目录 + 双 agent 试跑（最大风险验证；实际用的是 App 真机导出的目录，见下方记录）：
   - 用户在 Avatar-Android 上挑一个真实 UI 问题页面（至少 3 个 #N，其中 1 个用 Pin），agent 用 T0.4 的命令抓 `runtime.png` / `hierarchy.xml` / density / activity，按用户指定的坐标手写 `review.md` 与 `crops/`，放到 `~/UIReview/YYYY-MM-DD/HH-mm-ss/`。
   - 在 Avatar-Android 目录分别执行 Claude `/ui-review <path>` 与 Codex `$ui-review <path>`，只看关联表，不让其改代码。
   - 通过标准：有 `views` 的 #N，两家都关联到正确的 layout 文件与引用类；无 `views` 的 #N 至少一家给出正确文件或诚实标注「推测」。不通过 → 回改 5.4 格式或 Skill，再测，通过前不开 lane。
@@ -357,7 +357,14 @@ spike 记录（T0.4，2026-09-28，Pixel 7 `29091FDH200FEN` 420dpi 1080×2400 / 
 
 ### Lane Skill
 
-- [ ] S1 Skill 定稿：根据 T0.6 暴露的问题修订第 8 节内容；在集成后用 App 真实导出的目录再跑一次 Claude 与 Codex。
+- [x] S1 Skill 定稿：根据 T0.6 暴露的问题修订第 8 节内容；在集成后用 App 真实导出的目录再跑一次 Claude 与 Codex。
+
+  T0.6 / S1 记录（2026-09-28）：
+  - 输入：用户在 OnePlus 上用 UIBoard 导出的 `~/UIReview/2026-09-28/10-33-49`（TaskCenter → Bonus → 小屋三日签到；#1 Pin 指向 Day 1 选中三角「位置偏下」，#2 框选场景图「高度太小」）。
+  - 在 Avatar-Android 里跑 Claude `/ui-review` 与 Codex `$ui-review`（只读，只出关联表）。两边都关联到 `fragment_task_house_check_in.xml:120`（`day_1_select`，`translationY="8dp"` + 底部约束，Day 2/3 同构）+ `TaskHouseCheckInFragment.kt:165`，以及 `:48`（`scene` 写死 265×278dp，运行时 bounds 1043px ÷ 3.75 = 278.1dp 完全吻合）。通过标准达成。
+  - 差异：Claude 发现 `bg_task_center_house_scene.webp` 在 xxhdpi 下是 795×834px，即 265×278dp，只调高 View 会留白；Codex 没有发现这一层，但追到了 `TaskCenterFragment.kt:197`（Bonus 页创建 Fragment）。
+  - 据此修订 Skill：同一 id 出现在多个 layout 时，用同一 #N 其他命中 id 消歧（`day_1_select` 在 `dialog_house_check_in.xml` 里也有）；`views` 的 bounds 是可见区域，越出父容器的部分被裁掉（`day_1_select` 实际 24dp，bounds 只有 16dp）；图片尺寸类问题先比较位图原始尺寸。
+  - 两边都指出缺少 ref / Figma，无法确定目标值。这是 review 内容本身的限制，不是工具问题。
 
 ### 集成
 
@@ -369,11 +376,13 @@ spike 记录（T0.4，2026-09-28，Pixel 7 `29091FDH200FEN` 420dpi 1080×2400 / 
   - 自动化端到端：用临时调试钩子驱动真实 `EditorModel`（钩子已删除，不入库），流程为粘贴截图 → 2 框 + 1 Pin → 2 张 ref → Figma URL → `export()` → 打开 History / Settings；App 自绘窗口快照（不需要屏幕录制权限）。已验证：浅色 / 深色渲染；屏幕预览与 `annotated.png` 标注一致；review.md 在无设备事实时省略 `source/dp/views`；crop 坐标与裁剪内容正确；History 分组、缩略图与时间显示。
   - 端到端发现并修复两处：macOS 上 `.primaryAction` 会被放到 toolbar 左侧，改为 `.automatic` + `Spacer()`；History 时间由目录名 `10-03-20` 改为显示 `10:03:20`。
   - 待人工：点击 / 拖拽标注手感、⌘V 三种去处、拖放、删除与 ⌫、替换确认、Copy Path / Reveal、ADB 全链路（当前无设备）。
-- [ ] I2 端到端：Finder 双击 `build/UIBoard.app`（验证 GUI 环境下 adb 探测）→ 连接设备 → ⌘⇧A → 标 3 个问题（含 Pin）→ 加 1 张 Figma 复制的 ref（⌘V）→ 填 Figma URL → ⌘E → Copy Path → 在 Avatar-Android 分别跑 Claude `/ui-review` 与 Codex `$ui-review`，得到关联表与 plan。
+- [x] I2 端到端（用户真机走通 ⌘⇧A → 标注 → 导出 → Copy Path；ref / Figma 由自动化端到端覆盖）：Finder 双击 `build/UIBoard.app`（验证 GUI 环境下 adb 探测）→ 连接设备 → ⌘⇧A → 标 3 个问题（含 Pin）→ 加 1 张 Figma 复制的 ref（⌘V）→ 填 Figma URL → ⌘E → Copy Path → 在 Avatar-Android 分别跑 Claude `/ui-review` 与 Codex `$ui-review`，得到关联表与 plan。
 
 ## 8. Skill 规格
 
 ### `skills/ui-review/SKILL.md`
+
+> 已落地，**以仓库里的 `skills/ui-review/SKILL.md` 为准**；下方是初版，S1 按 T0.6 结果补了 id 消歧、可见区域 bounds、位图尺寸三条。
 
 ```markdown
 ---
