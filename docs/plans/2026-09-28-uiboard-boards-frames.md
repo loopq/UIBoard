@@ -158,6 +158,7 @@ frames:
   - 端到端中发现并修复：帧头被 `Spacer` 撑宽，和帧不对齐（改成固定为帧宽）；`borderlessButton` 样式的 Menu 会把「+」格压成一行文字（改为 `.menuStyle(.button)` + `.buttonStyle(.plain)`）。
 - [x] 临时调试钩子端到端（验证后删除）：2 个标签，其中一个 2 帧，每帧都有标注；截图检查标签栏、画板、导出目录与 v2 review.md。
 - [x] Codex 审查（cxd-third）：4 条全部成立并已修复，详见 [review](file:///Users/loopq/dev/git/loopq/uiboard/docs/reviews/2026-09-28-uiboard-boards-frames-review.md)。
+- [x] 修复用户反馈「标签点不动」（`5a135e6`）：根因是标签栏外层的横向 `ScrollView` 紧贴 unified toolbar 下方时收不到点击（同一窗口里 Issue 卡片的纵向 ScrollView、References 的横向 ScrollView 都正常）。已去掉 ScrollView，标签改为 Button，右侧加「全部标签」菜单兜底溢出；同时修了隐藏的 × 仍能被点到、标签内边距点不到、标题被撑到 170pt 三个问题。验证方式：窗口激活后，用 `NSApp.postEvent` 发送排队的鼠标事件（`sendEvent` 会和文本框的鼠标跟踪循环互相等待，不能用），标签 1/2 互切、全部标签菜单、卡片选中、References「+」都通过。
 - [ ] 用户真机：⌘⇧A 新标签、⌘⌥A 追加、「+」格、关闭确认、导出后跑 `/ui-review`。
 - [x] `scripts/install-app.sh` 更新「应用程序」里的版本。
 
