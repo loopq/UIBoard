@@ -11,13 +11,17 @@ enum HierarchyHitTester {
         let query = rect.size == .zero
             ? CGRect(x: rect.origin.x - 1, y: rect.origin.y - 1, width: 2, height: 2)
             : rect
+        // Window-sized containers say nothing about location (the activity already names the screen).
+        // Ceiling: an id'd full-screen custom view is dropped too; the skill then falls back to the activity.
+        let windowArea = delegate.nodes.map { $0.hit.bounds.width * $0.hit.bounds.height }.max() ?? 0
 
         return delegate.nodes.compactMap { node -> ScoredHit? in
             guard
                 !node.hit.resourceId.isEmpty,
                 !node.hit.resourceId.hasPrefix("android:id/"),
                 node.hit.bounds.width > 0,
-                node.hit.bounds.height > 0
+                node.hit.bounds.height > 0,
+                node.hit.bounds.width * node.hit.bounds.height < windowArea * 0.9
             else { return nil }
 
             let intersection = query.intersection(node.hit.bounds)

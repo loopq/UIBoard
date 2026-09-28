@@ -1,0 +1,4 @@
+List of devices attached
+29091FDH200FEN         device usb:1-2 product:panther model:Pixel_7 device:panther transport_id:240
+d77de316               device usb:0-1 product:OnePlus7Pro_CH model:GM1910 device:OnePlus7Pro transport_id:241
+

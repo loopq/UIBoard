@@ -35,6 +35,26 @@ final class AdbTests: XCTestCase {
         XCTAssertTrue(HitTest.views(for: CGRect(x: 900, y: 40, width: 0, height: 0), hierarchyXML: hierarchy).isEmpty)
     }
 
+    func testRealDeviceOutputs() throws {
+        XCTAssertEqual(AdbParsers.devices(try fixture("devices-l-real", extension: "txt", subdirectory: "adb")), [
+            AdbDevice(id: "29091FDH200FEN", model: "Pixel_7", state: "device"),
+            AdbDevice(id: "d77de316", model: "GM1910", state: "device"),
+        ])
+        XCTAssertEqual(AdbParsers.activity(try fixture("dumpsys-activity-oneplus", extension: "txt", subdirectory: "adb")),
+                       "net.oneplus.launcher/.Launcher")
+        XCTAssertEqual(AdbParsers.activity(try fixture("dumpsys-activity-pixel", extension: "txt", subdirectory: "adb")),
+                       "com.google.android.apps.nexuslauncher/.NexusLauncherActivity")
+        let hierarchy = try XCTUnwrap(AdbParsers.hierarchy(try fixture("uiautomator-tty-pixel", extension: "txt", subdirectory: "adb")))
+        XCTAssertTrue(String(decoding: hierarchy, as: UTF8.self).hasPrefix("<?xml"))
+        XCTAssertTrue(String(decoding: hierarchy, as: UTF8.self).hasSuffix("</hierarchy>"))
+    }
+
+    func testHitTestSkipsWindowSizedContainers() throws {
+        let hierarchy = try fixture("uiautomator-launcher-oneplus", extension: "xml", subdirectory: "adb")
+        XCTAssertTrue(HitTest.views(for: CGRect(x: 469, y: 1312, width: 0, height: 0), hierarchyXML: hierarchy).isEmpty)
+        XCTAssertTrue(HitTest.views(for: CGRect(x: 137, y: 660, width: 690, height: 429), hierarchyXML: hierarchy).isEmpty)
+    }
+
     func testLocateUsesExecutableOverride() throws {
         let directory = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }

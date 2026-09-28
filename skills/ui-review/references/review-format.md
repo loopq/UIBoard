@@ -69,12 +69,12 @@ refs: [ref-1.png, ref-2.png]
 
 ```text
 q = rect 为零尺寸 ? 以该点为中心的 2×2 rect : rect
-候选 = resource-id 非空、不以 "android:id/" 开头、bounds 面积 > 0、与 q 相交的节点
+候选 = resource-id 非空、不以 "android:id/" 开头、bounds 面积 > 0 且 < 视图树最大节点面积的 90%、与 q 相交的节点
 score = area(q ∩ b) / area(q ∪ b)
 按 score 降序；相同则面积小者优先；再相同按视图树文档顺序；取前 3
 ```
 
-对 Pin 来说，排第一的是包含该点的最小节点。
+对 Pin 来说，排第一的是包含该点的最小带 id 节点。铺满窗口的容器不参与命中（它们不提供位置信息）；所以 `views` 缺失可能意味着目标节点本身没有 resource-id，此时按 activity + 可见文案定位，也可以按 rect 在 `hierarchy.xml` 里查同位置节点的 `text` / `content-desc`。
 
 ## annotated.png 上的标记
 

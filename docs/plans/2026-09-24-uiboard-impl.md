@@ -214,12 +214,14 @@ refs: [ref-1.png, ref-2.png]
 
 ```text
 q = rect 为零尺寸 ? 以该点为中心的 2×2 rect : rect
-候选 = hierarchy 中 resource-id 非空、不以 "android:id/" 开头、bounds 面积 > 0、且与 q 相交的节点
+候选 = hierarchy 中 resource-id 非空、不以 "android:id/" 开头、bounds 面积 > 0 且 < 最大节点面积 × 0.9、且与 q 相交的节点
 score = area(q ∩ b) / area(q ∪ b)
 按 score 降序；score 相同则面积小者优先；再相同按 hierarchy 文档顺序；取前 3
 ```
 
 Pin 用 2×2 rect 后，IoU 自动偏向包含该点的最小节点，与框共用一条路径。uiautomator 的 `bounds="[x1,y1][x2,y2]"` 转为 `x,y,w,h`。
+
+窗口级容器排除（2026-09-28 真机发现）：OnePlus 桌面上被标的图标 TextView 没有 resource-id，带 id 的只有铺满窗口的 `action_bar_root` / `launcher` / `drag_layer`，4 个标注命中完全相同的三个容器，对定位零价值且会误导。改为排除面积 ≥ 最大节点 90% 的节点，宁可不输出 `views`，让 Skill 走 activity + 文案降级。天花板：有 id 的全屏自定义 View（如 Spine 画布）也会被排除，此时靠 activity 定位。
 
 ### 5.8 ADB 命令表
 
@@ -278,7 +280,12 @@ T0 记录：
 - golden：`Fixtures/golden-input.json`（输入）+ `golden-hierarchy.xml` → 期望 `golden-review.md`（3 个 #N：框命中 3 个 view、Pin 命中最小节点、Pin 无命中不输出 views）。
 - remote：`git@github.com:loopq/UIBoard.git`。
 
-spike 记录：（T0.4 / T0.6 完成后填写）
+spike 记录（T0.4，2026-09-28，Pixel 7 `29091FDH200FEN` 420dpi 1080×2400 / OnePlus GM1910 `d77de316` 600dpi 1440×3120）：
+- dumpsys 两种格式都在真机出现（Pixel `topResumedActivity=`、OnePlus `mResumedActivity:`），解析正确；真实输出已存为 `Fixtures/adb/*-real` / `*-pixel` / `*-oneplus` 并加测试。
+- uiautomator：桌面 2.84s，Avatar 首页 2.39s（154 节点 / 73 带 id / 45 个 App id），开屏广告页 2.45s，都在 8s 超时内；输出格式与合成样例一致（开头是 XML 声明、结尾有 `UI hierchary dumped to`），没有前缀行。
+- 坐标系：按 `user_coins_view` / `tab_layout` / `bottom_nav` 的 bounds 裁 screencap，内容完全对齐，两者是同一个像素坐标系。OnePlus 的根节点是 1440×2910（不含导航栏），原点一致。
+- 发现：窗口级容器噪声，已在 5.7 修复；开屏广告页的 activity 是 `com.google.android.libraries.ads...AdActivity`，Skill 已有「非本仓代码」规则兜住。
+- 待测：Spine 编辑器（持续动画）下 uiautomator 能否拿到 idle；静态编辑器。
 
 ### Lane Core（Codex，worktree）
 

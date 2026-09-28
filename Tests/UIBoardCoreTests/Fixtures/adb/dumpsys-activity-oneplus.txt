@@ -1,0 +1,1 @@
+    mResumedActivity: ActivityRecord{e162efb u0 net.oneplus.launcher/.Launcher t14565}
