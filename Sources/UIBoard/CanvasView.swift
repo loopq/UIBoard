@@ -24,45 +24,20 @@ struct CanvasView: View {
     @State private var dropTargeted = false
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                Color.canvas
-                if let runtime = model.runtime {
-                    shot(runtime, in: geo.size)
-                } else {
-                    EmptyDropZone()
-                }
+        ZStack {
+            Color.canvas
+            if let board = model.current {
+                BoardView(board: board)
+            } else {
+                EmptyDropZone()
             }
-            .overlay(alignment: .bottom) { toast }
-            .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 3) } }
         }
+        .overlay(alignment: .bottom) { toast }
+        .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 3) } }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
-            Task { if let data = await ImageSource.load(providers).first { model.setRuntime(data) } }
+            Task { model.open(await ImageSource.load(providers), to: .currentBoard) }
             return true
         }
-    }
-
-    private func shot(_ runtime: CGImage, in available: CGSize) -> some View {
-        let size = CGSize(width: runtime.width, height: runtime.height)
-        let scale = max(min((available.width - 48) / size.width, (available.height - 48) / size.height), 0.01)
-        return Image(decorative: model.rendered ?? runtime, scale: 1)
-            .resizable()
-            .interpolation(.high)
-            .frame(width: size.width * scale, height: size.height * scale)
-            .overlay(Rectangle().strokeBorder(Color.shotline, lineWidth: 1))
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        if model.draft == nil { model.window?.makeFirstResponder(nil) }
-                        let rect = MarkGeometry.rect(from: value.startLocation, to: value.location, scale: scale, size: size)
-                        model.draft = rect.size == .zero ? nil : Mark(rect: rect)
-                    }
-                    .onEnded { value in
-                        model.commit(Mark(rect: MarkGeometry.rect(from: value.startLocation, to: value.location, scale: scale, size: size)))
-                    }
-            )
-            .accessibilityLabel("Screenshot. Click to pin, drag to frame.")
     }
 
     @ViewBuilder private var toast: some View {
@@ -75,6 +50,122 @@ struct CanvasView: View {
                 .padding(.bottom, 20)
                 .transition(.opacity)
         }
+    }
+}
+
+private struct BoardView: View {
+    @Environment(EditorModel.self) private var model
+    let board: Board
+
+    private static let headerHeight: CGFloat = 26
+
+    var body: some View {
+        GeometryReader { geo in
+            let sizes = board.frames.map(\.size)
+            let gap = BoardLayout.gap(for: sizes)
+            let slot = (sizes.map(\.width).max() ?? 0) * 0.35
+            let content = BoardLayout.size(for: sizes)
+            let scale = max(min((geo.size.width - 48) / (content.width + gap + slot),
+                                (geo.size.height - 48 - Self.headerHeight) / content.height), 0.01)
+            HStack(alignment: .top, spacing: gap * scale) {
+                ForEach(Array(board.frames.enumerated()), id: \.element.id) { index, frame in
+                    VStack(spacing: 6) {
+                        FrameHeader(index: index, removable: board.frames.count > 1)
+                            .frame(width: frame.size.width * scale, height: Self.headerHeight - 6)
+                        FrameCanvas(index: index, frame: frame, scale: scale)
+                    }
+                }
+                AddFrameSlot()
+                    .frame(width: slot * scale, height: content.height * scale)
+                    .padding(.top, Self.headerHeight)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+}
+
+private struct FrameHeader: View {
+    @Environment(EditorModel.self) private var model
+    let index: Int
+    let removable: Bool
+    @State private var hovering = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(Frame.label(at: index))
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .frame(height: 18)
+                .background(RoundedRectangle(cornerRadius: 4).fill(Color.ctrl))
+            if removable && hovering {
+                Button { model.requestRemoveFrame(index) } label: {
+                    Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).frame(width: 16, height: 16)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Remove frame \(Frame.label(at: index))")
+                .accessibilityLabel("Remove frame \(Frame.label(at: index))")
+            }
+            Spacer(minLength: 0)
+        }
+        .contentShape(Rectangle())
+        .onHover { hovering = $0 }
+    }
+}
+
+private struct FrameCanvas: View {
+    @Environment(EditorModel.self) private var model
+    let index: Int
+    let frame: BoardFrame
+    let scale: CGFloat
+
+    var body: some View {
+        Image(decorative: model.rendered(frame: index) ?? frame.image, scale: 1)
+            .resizable()
+            .interpolation(.high)
+            .frame(width: frame.size.width * scale, height: frame.size.height * scale)
+            .overlay(Rectangle().strokeBorder(Color.shotline, lineWidth: 1))
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if model.draft == nil { model.window?.makeFirstResponder(nil) }
+                        let rect = MarkGeometry.rect(from: value.startLocation, to: value.location, scale: scale, size: frame.size)
+                        model.draft = rect.size == .zero ? nil : Mark(rect: rect, frame: index)
+                    }
+                    .onEnded { value in
+                        let rect = MarkGeometry.rect(from: value.startLocation, to: value.location, scale: scale, size: frame.size)
+                        model.commit(Mark(rect: rect, frame: index))
+                    }
+            )
+            .accessibilityLabel("Frame \(Frame.label(at: index)). Click to pin, drag to frame.")
+    }
+}
+
+private struct AddFrameSlot: View {
+    @Environment(EditorModel.self) private var model
+
+    var body: some View {
+        Menu {
+            Button("Capture from Device") { Task { await model.capture(to: .currentBoard) } }
+            Button("Import…") { model.importImages(to: .currentBoard) }
+            Button("Paste Image") { model.pasteFrame() }
+        } label: {
+            VStack(spacing: 6) {
+                Image(systemName: "plus").font(.system(size: 18))
+                Text("Add frame").font(.system(size: 11))
+            }
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.dash, style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])))
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.button)
+        .buttonStyle(.plain)
+        .menuIndicator(.hidden)
+        .help("Add a frame to this board (⌘⌥A captures from device)")
+        .accessibilityLabel("Add frame")
     }
 }
 

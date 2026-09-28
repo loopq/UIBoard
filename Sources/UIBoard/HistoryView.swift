@@ -55,7 +55,7 @@ private struct HistoryCell: View {
             ZStack {
                 Color.canvas
                 if let thumbnail {
-                    Image(decorative: thumbnail, scale: 2).resizable().aspectRatio(contentMode: .fill)
+                    Image(decorative: thumbnail, scale: 2).resizable().aspectRatio(contentMode: .fit)
                 }
             }
             .frame(width: 120, height: 267)

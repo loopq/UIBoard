@@ -1,6 +1,6 @@
 ---
 name: ui-review
-description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-MM-DD/HH-mm-ss，含 review.md 且 format 为 uiboard-review/1），把每个 #N 问题关联到当前仓库的模块文件（Activity / Fragment / layout / view id），先产出关联表与修复 plan，确认后再改代码。可在路径后附定位提示（文件 / 类名 / 目录 / 一句话，可用 `#N:` 限定到单个问题）。触发：/ui-review <path> [提示]、$ui-review <path> [提示]，或用户贴出 UIReview 目录路径要求修 UI。
+description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-MM-DD/HH-mm-ss，含 review.md 且 format 为 uiboard-review/1 或 /2），把每个 #N 问题关联到当前仓库的模块文件（Activity / Fragment / layout / view id），先产出关联表与修复 plan，确认后再改代码。可在路径后附定位提示（文件 / 类名 / 目录 / 一句话，可用 `#N:` 限定到单个问题）。触发：/ui-review <path> [提示]、$ui-review <path> [提示]，或用户贴出 UIReview 目录路径要求修 UI。
 ---
 
 # UI Review → 模块文件关联与修复
@@ -9,13 +9,13 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 
 - 一个或多个 review 目录路径（可带引号）。review 目录是只读输入，禁止在里面写任何文件。
 - 可选的定位提示：参数里凡是「存在且含 `review.md` 的目录」都是 review 路径，其余内容一律是提示。提示可以是文件路径、类名、目录 / 模块、页面描述；以 `#N:` 开头的只作用于第 N 个问题，否则作用于全部。
-- 先读 `review.md` frontmatter：`format` 必须是 `uiboard-review/1`，主版本不认识就停下报告。
+- 先读 `review.md` frontmatter：`format` 是 `uiboard-review/1`（单张截图）或 `uiboard-review/2`（一个画板里横排多帧），其他版本停下报告。
 - 字段含义见 `references/review-format.md`。
 
 ## 读取顺序（控制视觉 token）
 
 1. `review.md` 全文。
-2. `annotated.png` 看一次，建立各 #N 的整体位置感。
+2. `annotated.png` 看一次，建立各 #N 的整体位置感（v2 是整板拼图，帧 A、B… 从左到右）。
 3. 每个 #N 看 `crops/N.png`（原分辨率），细节判断以 crop 为准。
 4. `ref-*.png` 只作为正确结果参考。
 5. `runtime.png` 只在 crop 不够时看。
@@ -27,6 +27,7 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 - 有 `dp` 行时直接拿它和 layout / Figma 的 dp 值比较；没有 `dp` 行说明截图不是 ADB 来源，不要假设 density。
 - `crop: 路径 @ ox,oy` 中 `ox,oy` 是 crop 左上角在 runtime 中的坐标。
 - Pin 的引线只是连接线，不代表移动方向。
+- v2：每个问题有 `frame` 行，`rect` / `crop` / `views` 都是该帧的帧内坐标；在拼图里的位置 = frontmatter 里该帧的 `offset` + 帧内坐标。`dp`、`activity`、视图树（`hierarchy-X.xml`）都按问题所属的帧取，不要混用其他帧的。多帧通常是同一页面的不同状态，对比帧之间的差异本身就是线索。
 - `views` 的 bounds 是**可见区域**：越出父容器（translation、负 margin）的部分会被裁掉。拿它和 layout 尺寸比较时，以 layout 声明为准，被裁的差值本身就是线索。
 
 ## 关联模块文件（每个 #N，按证据强度依次尝试，命中即停）
@@ -39,7 +40,7 @@ description: 读取 UIBoard 导出的 UI Review 目录（形如 ~/UIReview/YYYY-
 - 提示只决定从哪开始找，不限制修改范围；根因在共享组件时按「修复原则」处理。
 
 1. `views`：取 resource-id 的 name → `rg -n '@\+id/<name>\b' --glob '**/res/layout*/**'` → layout 文件:行 → 找引用该 layout 的类（`R.layout.<layout>` 或 `<LayoutCamel>Binding`）→ 在类中找该 view 的使用（`binding.<nameCamel>` / `R.id.<name>`）。同一个 id 出现在多个 layout 时，选同时包含该 #N 其他命中 id（父容器）的那个 layout；仍有多个时再用 activity 所承载的页面链路（Activity → Fragment / ViewPager）排除。
-2. `activity`：定位 Activity 类文件，结合 crop 可见内容锁定其 Fragment / Adapter / 子布局。
+2. `activity`（v2 取问题所属帧的 activity）：定位 Activity 类文件，结合 crop 可见内容锁定其 Fragment / Adapter / 子布局。
 3. crop 中的可见文案：`rg` 字符串资源的 value → `@string/<name>` / `R.string.<name>` 的使用处。
 4. 以上都没有：按视觉结构与页面语义搜索，置信度标「推测」。
 
@@ -51,6 +52,8 @@ resource-id 或 activity 属于第三方包（广告 SDK 等）时标注「非�
 
 | # | 问题摘要 | 来源（views / activity / 文案 / 提示 / 一致 / 冲突 / 推测） | 证据 | 文件:行 | 置信度（确定/高/推测） | 根因假设 |
 |---|---|---|---|---|---|---|
+
+一次传入多个 review 目录时，`#` 列写成 `<目录名>#N`（例如 `10-33-49#1`），避免不同目录的编号混淆。
 
 然后：
 

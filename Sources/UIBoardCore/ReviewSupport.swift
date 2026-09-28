@@ -3,45 +3,49 @@ import Foundation
 
 enum MarkdownRenderer {
     static func render(_ review: Review, created: Date, hits: [[ViewHit]]) -> String {
+        let multi = review.frames.count > 1
+        let sizes = review.frames.map(\.size)
+        let board = BoardLayout.size(for: sizes)
         var lines = [
             "---",
-            "format: uiboard-review/1",
+            "format: uiboard-review/\(multi ? 2 : 1)",
             "created: \(timestamp(created))",
             "image: runtime.png",
-            "size: \(review.runtime.width)x\(review.runtime.height)",
+            "size: \(integer(board.width))x\(integer(board.height))",
         ]
-
-        if let facts = review.facts {
-            lines.append("source: adb")
-            let model = facts.model?
-                .replacingOccurrences(of: "_", with: " ")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            let usableModel = model.flatMap { $0.isEmpty ? nil : $0 }
-            lines.append("device: \(usableModel.map { "\($0) (\(facts.serial))" } ?? facts.serial)")
-            if let density = facts.densityDpi { lines.append("density: \(density)") }
-            if let activity = facts.activity, !activity.isEmpty { lines.append("activity: \(activity)") }
-        }
+        if !multi { lines += factLines(review.facts, indent: "") }
         if !review.figmaURL.isEmpty { lines.append("figma: \(review.figmaURL)") }
         if !review.refs.isEmpty {
             let refs = review.refs.indices.map { "ref-\($0 + 1).png" }.joined(separator: ", ")
             lines.append("refs: [\(refs)]")
         }
+        if multi {
+            lines.append("frames:")
+            for (index, (frame, offset)) in zip(review.frames, BoardLayout.offsets(for: sizes)).enumerated() {
+                let label = Frame.label(at: index)
+                lines += [
+                    "  - frame: \(label)",
+                    "    offset: \(integer(offset.x)),\(integer(offset.y))",
+                    "    size: \(frame.image.width)x\(frame.image.height)",
+                ]
+                lines += factLines(frame.facts, indent: "    ")
+                if frame.facts?.hierarchyXML != nil { lines.append("    hierarchy: hierarchy-\(label).xml") }
+            }
+        }
         lines += ["---", "", "# UI Review"]
 
         for (index, mark) in review.marks.enumerated() {
-            let crop = Crop.rect(for: mark, in: review.pixelSize)
-            lines += [
-                "",
-                "## #\(index + 1)",
-                "",
-                "- rect: \(integer(mark.rect.origin.x)),\(integer(mark.rect.origin.y)),\(integer(mark.rect.width)),\(integer(mark.rect.height))",
-            ]
-            if let density = review.facts?.densityDpi {
+            let frame = review.frames[mark.frame]
+            let crop = Crop.rect(for: mark, in: frame.size)
+            lines += ["", "## #\(index + 1)", ""]
+            if multi { lines.append("- frame: \(Frame.label(at: mark.frame))") }
+            lines.append("- rect: \(integer(mark.rect.origin.x)),\(integer(mark.rect.origin.y)),\(integer(mark.rect.width)),\(integer(mark.rect.height))")
+            if let density = frame.facts?.densityDpi {
                 let scale = 160.0 / Double(density)
                 lines.append("- dp: \(decimal(mark.rect.origin.x, scale: scale)),\(decimal(mark.rect.origin.y, scale: scale)),\(decimal(mark.rect.width, scale: scale)),\(decimal(mark.rect.height, scale: scale))")
             }
             lines.append("- crop: crops/\(index + 1).png @ \(integer(crop.origin.x)),\(integer(crop.origin.y))")
-            if review.facts != nil, index < hits.count, !hits[index].isEmpty {
+            if frame.facts != nil, index < hits.count, !hits[index].isEmpty {
                 let value = hits[index].prefix(3).map(viewDescription).joined(separator: " · ")
                 lines.append("- views: \(value)")
             }
@@ -49,6 +53,19 @@ enum MarkdownRenderer {
         }
 
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func factLines(_ facts: DeviceFacts?, indent: String) -> [String] {
+        guard let facts else { return [] }
+        var lines = ["\(indent)source: adb"]
+        let model = facts.model?
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let usableModel = model.flatMap { $0.isEmpty ? nil : $0 }
+        lines.append("\(indent)device: \(usableModel.map { "\($0) (\(facts.serial))" } ?? facts.serial)")
+        if let density = facts.densityDpi { lines.append("\(indent)density: \(density)") }
+        if let activity = facts.activity, !activity.isEmpty { lines.append("\(indent)activity: \(activity)") }
+        return lines
     }
 
     private static func timestamp(_ date: Date) -> String {
@@ -110,17 +127,28 @@ enum Exporter {
         }
 
         do {
-            try ImageCodec.png(review.runtime).write(to: temporaryDirectory.appendingPathComponent("runtime.png"))
-            guard let annotated = AnnotationDrawing.render(runtime: review.runtime, marks: review.marks, highlight: nil) else {
+            let multi = review.frames.count > 1
+            let frames = review.frames
+            guard
+                let runtime = BoardComposer.compose(frames.map(\.image)),
+                let annotated = BoardComposer.compose(try frames.indices.map { index in
+                    guard let image = AnnotationDrawing.render(runtime: frames[index].image, marks: review.marks, frame: index, highlight: nil) else {
+                        throw UIBoardError.imageEncodeFailed
+                    }
+                    return image
+                })
+            else {
                 throw UIBoardError.imageEncodeFailed
             }
+            try ImageCodec.png(runtime).write(to: temporaryDirectory.appendingPathComponent("runtime.png"))
             try ImageCodec.png(annotated).write(to: temporaryDirectory.appendingPathComponent("annotated.png"))
 
             let cropsDirectory = temporaryDirectory.appendingPathComponent("crops", isDirectory: true)
             try fileManager.createDirectory(at: cropsDirectory, withIntermediateDirectories: false)
             for (index, mark) in review.marks.enumerated() {
-                let rect = Crop.rect(for: mark, in: review.pixelSize)
-                guard !rect.isNull, !rect.isEmpty, let crop = review.runtime.cropping(to: rect) else {
+                let frame = frames[mark.frame]
+                let rect = Crop.rect(for: mark, in: frame.size)
+                guard !rect.isNull, !rect.isEmpty, let crop = frame.image.cropping(to: rect) else {
                     throw UIBoardError.exportFailed("Could not crop mark #\(index + 1).")
                 }
                 try ImageCodec.png(crop).write(to: cropsDirectory.appendingPathComponent("\(index + 1).png"))
@@ -130,12 +158,13 @@ enum Exporter {
                 try ImageCodec.png(reference).write(to: temporaryDirectory.appendingPathComponent("ref-\(index + 1).png"))
             }
 
-            let hits: [[ViewHit]]
-            if let hierarchy = review.facts?.hierarchyXML {
-                try hierarchy.write(to: temporaryDirectory.appendingPathComponent("hierarchy.xml"))
-                hits = review.marks.map { HierarchyHitTester.views(for: $0.rect, hierarchyXML: hierarchy) }
-            } else {
-                hits = Array(repeating: [], count: review.marks.count)
+            for (index, frame) in frames.enumerated() {
+                guard let hierarchy = frame.facts?.hierarchyXML else { continue }
+                let name = multi ? "hierarchy-\(Frame.label(at: index)).xml" : "hierarchy.xml"
+                try hierarchy.write(to: temporaryDirectory.appendingPathComponent(name))
+            }
+            let hits: [[ViewHit]] = review.marks.map { mark in
+                frames[mark.frame].facts?.hierarchyXML.map { HierarchyHitTester.views(for: mark.rect, hierarchyXML: $0) } ?? []
             }
             let markdown = MarkdownRenderer.render(review, created: now, hits: hits)
             try Data(markdown.utf8).write(to: temporaryDirectory.appendingPathComponent("review.md"))

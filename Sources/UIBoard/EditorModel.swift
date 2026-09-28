@@ -19,19 +19,48 @@ enum Prefs {
     }
 }
 
-struct Replacement {
-    var runtime: CGImage?
-    var facts: Task<DeviceFacts, Never>?
+struct BoardFrame: Identifiable {
+    let id = UUID()
+    var image: CGImage
+    var facts: DeviceFacts?
+    var fetchingFacts = false
+
+    var size: CGSize { CGSize(width: image.width, height: image.height) }
+}
+
+struct Board: Identifiable {
+    let id = UUID()
+    let number: Int
+    var frames: [BoardFrame] { didSet { exportedURL = nil } }
+    var marks: [Mark] = [] { didSet { exportedURL = nil } }
+    var refs: [CGImage] = [] { didSet { exportedURL = nil } }
+    var figmaURL = "" { didSet { exportedURL = nil } }
+    var selected: Int?
+    var exportedURL: URL?
+
+    var title: String {
+        guard let activity = frames.first?.facts?.activity else { return "Screen \(number)" }
+        return String(activity.split(separator: "/").last?.split(separator: ".").last ?? Substring(activity))
+    }
+
+    var isDirty: Bool { !marks.isEmpty && exportedURL == nil }
+}
+
+enum Destination {
+    case newBoard
+    case currentBoard
+}
+
+enum PendingRemoval {
+    case board(UUID)
+    case frame(board: UUID, index: Int)
 }
 
 @MainActor
 @Observable
 final class EditorModel {
-    var runtime: CGImage?
-    var marks: [Mark] = []
-    var refs: [CGImage] = []
-    var figmaURL = ""
-    var selected: Int?
+    var boards: [Board] = []
+    var currentID: UUID?
     var focusRequest: Int?
     var draft: Mark?
 
@@ -40,102 +69,208 @@ final class EditorModel {
     var isCapturing = false
     var isExporting = false
 
-    var pendingReplacement: Replacement?
+    var pendingRemoval: PendingRemoval?
     var exportedURL: URL?
     var lastExport: URL?
     var errorMessage: String?
     var adbMissing = false
     var toast: String?
 
-    private var facts: DeviceFacts?
-    private var factsTask: Task<DeviceFacts, Never>?
-    private var factsToken = UUID()
     @ObservationIgnored weak var window: NSWindow?
-    @ObservationIgnored private var renderCache: (runtime: CGImage, rects: [CGRect], highlight: Int?, image: CGImage?)?
+    @ObservationIgnored private var factsTasks: [UUID: Task<DeviceFacts, Never>] = [:]
+    @ObservationIgnored private var renderCache: [UUID: (key: RenderKey, image: CGImage?)] = [:]
+    @ObservationIgnored private var boardCounter = 0
 
-    var isFetchingFacts: Bool { factsTask != nil }
-    var canExport: Bool { runtime != nil && !marks.isEmpty && !isExporting }
+    private struct RenderKey: Equatable {
+        let image: ObjectIdentifier
+        let frame: Int
+        let geometry: [CGRect]
+        let owners: [Int]
+        let highlight: Int?
+    }
+
+    var currentIndex: Int? { boards.firstIndex { $0.id == currentID } }
+    var current: Board? { currentIndex.map { boards[$0] } }
+    var isFetchingFacts: Bool { current?.frames.contains(where: \.fetchingFacts) == true }
+    var canExport: Bool { current.map { !$0.marks.isEmpty } == true && !isExporting }
+    var dirtyCount: Int { boards.filter(\.isDirty).count }
     var selectedDevice: AdbDevice? { devices.first { $0.id == selectedSerial } }
 
-    var rendered: CGImage? {
-        guard let runtime else { return nil }
-        let shown = draft.map { marks + [$0] } ?? marks
-        let rects = shown.map(\.rect)
-        if let cache = renderCache, cache.runtime === runtime, cache.rects == rects, cache.highlight == selected {
-            return cache.image
-        }
-        let image = AnnotationRenderer.render(runtime: runtime, marks: shown, highlight: selected)
-        renderCache = (runtime, rects, selected, image)
+    func updateCurrent(_ body: (inout Board) -> Void) {
+        guard let index = currentIndex else { return }
+        body(&boards[index])
+    }
+
+    func rendered(frame index: Int) -> CGImage? {
+        guard let board = current, board.frames.indices.contains(index) else { return nil }
+        let frame = board.frames[index]
+        let shown = draft.map { board.marks + [$0] } ?? board.marks
+        let key = RenderKey(image: ObjectIdentifier(frame.image), frame: index,
+                            geometry: shown.map(\.rect), owners: shown.map(\.frame), highlight: board.selected)
+        if let cached = renderCache[frame.id], cached.key == key { return cached.image }
+        let image = AnnotationRenderer.render(runtime: frame.image, marks: shown, frame: index, highlight: board.selected)
+        renderCache[frame.id] = (key, image)
         return image
     }
 
-    // MARK: Runtime & references
+    // MARK: Boards & frames
 
-    func request(_ replacement: Replacement) {
-        if marks.isEmpty { apply(replacement) } else { pendingReplacement = replacement }
-    }
-
-    func apply(_ replacement: Replacement) {
-        pendingReplacement = nil
-        if replacement.runtime == nil {
-            refs = []
-            figmaURL = ""
+    func add(_ images: [(CGImage, Task<DeviceFacts, Never>?)], to destination: Destination) {
+        guard !images.isEmpty else { return }
+        if destination == .currentBoard, let index = currentIndex {
+            let start = boards[index].frames.count
+            boards[index].frames += images.map(makeFrame)
+            let labels = (start..<boards[index].frames.count).map(Frame.label(at:)).joined(separator: ", ")
+            show("Added frame \(labels)")
+        } else {
+            for image in images {
+                boardCounter += 1
+                let board = Board(number: boardCounter, frames: [makeFrame(image)])
+                boards.append(board)
+                currentID = board.id
+            }
         }
-        runtime = replacement.runtime
-        marks = []
-        selected = nil
         draft = nil
-        facts = nil
-        factsToken = UUID()
-        factsTask = replacement.facts
-        guard let task = replacement.facts else { return }
-        let token = factsToken
+    }
+
+    private func makeFrame(_ item: (CGImage, Task<DeviceFacts, Never>?)) -> BoardFrame {
+        var frame = BoardFrame(image: item.0)
+        guard let task = item.1 else { return frame }
+        frame.fetchingFacts = true
+        let id = frame.id
+        factsTasks[id] = task
         Task {
-            let value = await task.value
-            guard token == factsToken else { return }
-            facts = value
-            factsTask = nil
+            let facts = await task.value
+            setFacts(facts, frame: id)
+        }
+        return frame
+    }
+
+    private func setFacts(_ facts: DeviceFacts, frame id: UUID) {
+        factsTasks[id] = nil
+        for b in boards.indices {
+            if let f = boards[b].frames.firstIndex(where: { $0.id == id }) {
+                boards[b].frames[f].facts = facts
+                boards[b].frames[f].fetchingFacts = false
+            }
         }
     }
 
-    func newReview() {
-        request(Replacement())
-    }
-
-    func setRuntime(_ data: Data) {
-        do { request(Replacement(runtime: try ImageIngest.decode(data))) } catch { report(error) }
+    func open(_ items: [Data], to destination: Destination) {
+        do { add(try items.map { (try ImageIngest.decode($0), nil) }, to: destination) } catch { report(error) }
     }
 
     func addRefs(_ items: [Data]) {
-        do { refs += try items.map(ImageIngest.decode) } catch { report(error) }
-    }
-
-    func paste(_ data: Data) {
-        if runtime == nil {
-            setRuntime(data)
-        } else {
-            addRefs([data])
-            show("Added as reference \(refs.count)")
+        guard currentIndex != nil else { return open(items, to: .newBoard) }
+        do {
+            let images = try items.map(ImageIngest.decode)
+            updateCurrent { $0.refs += images }
+        } catch {
+            report(error)
         }
     }
 
-    func importRuntime() {
-        if let data = ImageSource.open(multiple: false).first { setRuntime(data) }
+    func paste(_ data: Data) {
+        if current == nil {
+            open([data], to: .newBoard)
+        } else {
+            addRefs([data])
+            show("Added as reference \(current?.refs.count ?? 0)")
+        }
+    }
+
+    func importImages(to destination: Destination) {
+        open(ImageSource.open(multiple: true), to: destination)
+    }
+
+    func pasteFrame() {
+        guard let data = ImageSource.pasteboardImage() else { return show("No image on the clipboard") }
+        open([data], to: .currentBoard)
+    }
+
+    func select(board id: UUID) {
+        currentID = id
+        draft = nil
+    }
+
+    func selectAdjacent(_ step: Int) {
+        guard let index = currentIndex, !boards.isEmpty else { return }
+        select(board: boards[(index + step + boards.count) % boards.count].id)
+    }
+
+    func requestClose(_ id: UUID) {
+        guard let board = boards.first(where: { $0.id == id }) else { return }
+        if board.isDirty { pendingRemoval = .board(id) } else { close(id) }
+    }
+
+    func requestCloseCurrent() {
+        if let keyWindow = NSApp.keyWindow, keyWindow !== window {
+            keyWindow.performClose(nil)
+        } else if let id = currentID {
+            requestClose(id)
+        }
+    }
+
+    func requestRemoveFrame(_ index: Int) {
+        guard let board = current else { return }
+        if board.marks.contains(where: { $0.frame == index }) {
+            pendingRemoval = .frame(board: board.id, index: index)
+        } else {
+            removeFrame(index, board: board.id)
+        }
+    }
+
+    func confirm(_ removal: PendingRemoval) {
+        pendingRemoval = nil
+        switch removal {
+        case let .board(id): close(id)
+        case let .frame(board, index): removeFrame(index, board: board)
+        }
+    }
+
+    private func close(_ id: UUID) {
+        guard let index = boards.firstIndex(where: { $0.id == id }) else { return }
+        for frame in boards[index].frames {
+            renderCache[frame.id] = nil
+            factsTasks[frame.id] = nil
+        }
+        boards.remove(at: index)
+        if currentID == id {
+            currentID = boards.isEmpty ? nil : boards[min(index, boards.count - 1)].id
+        }
+        draft = nil
+    }
+
+    private func removeFrame(_ index: Int, board id: UUID) {
+        guard let b = boards.firstIndex(where: { $0.id == id }), boards[b].frames.indices.contains(index) else { return }
+        renderCache[boards[b].frames[index].id] = nil
+        boards[b].frames.remove(at: index)
+        boards[b].marks = boards[b].marks.compactMap { mark in
+            guard mark.frame != index else { return nil }
+            var mark = mark
+            if mark.frame > index { mark.frame -= 1 }
+            return mark
+        }
+        boards[b].selected = nil
     }
 
     // MARK: Marks
 
     func commit(_ mark: Mark) {
-        marks.append(mark)
         draft = nil
-        selected = marks.count - 1
-        focusRequest = marks.count - 1
+        updateCurrent {
+            $0.marks.append(mark)
+            $0.selected = $0.marks.count - 1
+        }
+        focusRequest = (current?.marks.count ?? 1) - 1
     }
 
-    func delete(at index: Int) {
-        guard marks.indices.contains(index) else { return }
-        marks.remove(at: index)
-        selected = nil
+    func deleteMark(at index: Int) {
+        updateCurrent {
+            guard $0.marks.indices.contains(index) else { return }
+            $0.marks.remove(at: index)
+            $0.selected = nil
+        }
     }
 
     // MARK: Devices
@@ -165,7 +300,7 @@ final class EditorModel {
         UserDefaults.standard.set(serial, forKey: Prefs.lastDeviceSerial)
     }
 
-    func capture() async {
+    func capture(to destination: Destination) async {
         guard !isCapturing, let adb = adb(prompt: true) else { return }
         if selectedDevice?.isOnline != true { await refreshDevices(prompt: true) }
         guard let device = selectedDevice, device.isOnline else {
@@ -176,7 +311,7 @@ final class EditorModel {
         defer { isCapturing = false }
         do {
             let image = try ImageIngest.decode(try await adb.screencap(serial: device.id))
-            request(Replacement(runtime: image, facts: Task { await adb.facts(serial: device.id, model: device.model) }))
+            add([(image, Task { await adb.facts(serial: device.id, model: device.model) })], to: destination)
         } catch {
             report(error)
         }
@@ -185,28 +320,27 @@ final class EditorModel {
     // MARK: Export
 
     func export() async {
-        guard canExport else { return }
-        if let empty = marks.firstIndex(where: { $0.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
-            selected = empty
+        guard canExport, let board = current else { return }
+        if let empty = board.marks.firstIndex(where: { $0.note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+            updateCurrent { $0.selected = empty }
             focusRequest = empty
             show("Describe #\(empty + 1) before exporting")
             return
         }
         isExporting = true
         defer { isExporting = false }
-        let token = factsToken
-        if let task = factsTask {
-            let value = await task.value
-            guard token == factsToken else { return }
-            facts = value
-            factsTask = nil
+        for frame in board.frames {
+            if let task = factsTasks[frame.id] { setFacts(await task.value, frame: frame.id) }
         }
-        guard let runtime else { return }
-        let review = Review(runtime: runtime, facts: facts, marks: marks, refs: refs,
-                            figmaURL: figmaURL.trimmingCharacters(in: .whitespacesAndNewlines))
+        guard let index = boards.firstIndex(where: { $0.id == board.id }) else { return }
+        let snapshot = boards[index]
+        let review = Review(frames: snapshot.frames.map { Frame(image: $0.image, facts: $0.facts) },
+                            marks: snapshot.marks, refs: snapshot.refs,
+                            figmaURL: snapshot.figmaURL.trimmingCharacters(in: .whitespacesAndNewlines))
         let workspace = Prefs.workspaceURL
         do {
             let url = try await Task.detached { try ReviewExporter.export(review, workspace: workspace, now: Date()) }.value
+            if let i = boards.firstIndex(where: { $0.id == board.id }) { boards[i].exportedURL = url }
             exportedURL = url
             lastExport = url
         } catch {
@@ -237,8 +371,8 @@ final class EditorModel {
             return true
         }
         if flags.isDisjoint(with: [.command, .option, .control, .shift]), !editing,
-           event.keyCode == 51 || event.keyCode == 117, let selected {
-            delete(at: selected)
+           event.keyCode == 51 || event.keyCode == 117, let selected = current?.selected {
+            deleteMark(at: selected)
             return true
         }
         return false

@@ -6,16 +6,17 @@ struct InspectorView: View {
     @FocusState private var focusedCard: Int?
 
     var body: some View {
+        let board = model.current
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 6) {
                     Text("Issues").font(.system(size: 13, weight: .semibold))
-                    CountBadge(count: model.marks.count)
+                    CountBadge(count: board?.marks.count ?? 0)
                 }
-                if model.marks.isEmpty {
-                    emptyHint
+                if let board, !board.marks.isEmpty {
+                    cards(board)
                 } else {
-                    cards
+                    emptyHint
                 }
             }
             .padding([.horizontal, .top], 16)
@@ -23,6 +24,7 @@ struct InspectorView: View {
             Divider()
             ReferencesSection()
                 .padding(16)
+                .disabled(board == nil)
         }
         .frame(width: 340)
         .background(Color.panel)
@@ -32,7 +34,7 @@ struct InspectorView: View {
             model.focusRequest = nil
         }
         .onChange(of: focusedCard) {
-            if let focusedCard { model.selected = focusedCard }
+            if let focusedCard { model.updateCurrent { $0.selected = focusedCard } }
         }
     }
 
@@ -46,39 +48,41 @@ struct InspectorView: View {
         .padding(.bottom, 24)
     }
 
-    private var cards: some View {
+    private func cards(_ board: Board) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 8) {
-                    ForEach(Array(model.marks.indices), id: \.self) { index in
+                    ForEach(Array(board.marks.enumerated()), id: \.offset) { index, mark in
                         IssueCard(index: index,
+                                  frameLabel: board.frames.count > 1 ? Frame.label(at: mark.frame) : nil,
                                   note: noteBinding(index),
-                                  selected: model.selected == index,
+                                  selected: board.selected == index,
                                   focus: $focusedCard,
-                                  onSelect: { model.selected = index },
-                                  onDelete: { model.delete(at: index) })
+                                  onSelect: { model.updateCurrent { $0.selected = index } },
+                                  onDelete: { model.deleteMark(at: index) })
                             .id(index)
                     }
                 }
                 .padding(.bottom, 16)
             }
             .scrollIndicators(.never)
-            .onChange(of: model.selected) {
-                if let selected = model.selected { withAnimation { proxy.scrollTo(selected) } }
+            .onChange(of: board.selected) {
+                if let selected = board.selected { withAnimation { proxy.scrollTo(selected) } }
             }
         }
     }
 
     private func noteBinding(_ index: Int) -> Binding<String> {
         Binding(
-            get: { model.marks.indices.contains(index) ? model.marks[index].note : "" },
-            set: { if model.marks.indices.contains(index) { model.marks[index].note = $0 } }
+            get: { model.current.flatMap { $0.marks.indices.contains(index) ? $0.marks[index].note : nil } ?? "" },
+            set: { value in model.updateCurrent { if $0.marks.indices.contains(index) { $0.marks[index].note = value } } }
         )
     }
 }
 
 private struct IssueCard: View {
     let index: Int
+    let frameLabel: String?
     @Binding var note: String
     let selected: Bool
     var focus: FocusState<Int?>.Binding
@@ -88,11 +92,21 @@ private struct IssueCard: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Text("\(index + 1)")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
-                .frame(width: 20, height: 20)
-                .background(Circle().fill(Color(rgb: Palette.rgb(at: index))))
+            VStack(spacing: 4) {
+                Text("\(index + 1)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 20, height: 20)
+                    .background(Circle().fill(Color(rgb: Palette.rgb(at: index))))
+                if let frameLabel {
+                    Text(frameLabel)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 20, height: 16)
+                        .background(RoundedRectangle(cornerRadius: 4).fill(Color.ctrl))
+                        .help("Frame \(frameLabel)")
+                }
+            }
             TextField("Describe what looks wrong", text: $note, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(2...10)
@@ -130,16 +144,18 @@ private struct ReferencesSection: View {
     @State private var dropTargeted = false
 
     var body: some View {
-        @Bindable var model = model
+        let refs = model.current?.refs ?? []
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text("References").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
-                CountBadge(count: model.refs.count)
+                CountBadge(count: refs.count)
             }
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
-                    ForEach(Array(model.refs.indices), id: \.self) { index in
-                        RefThumb(image: model.refs[index]) { model.refs.remove(at: index) }
+                    ForEach(Array(refs.enumerated()), id: \.offset) { index, image in
+                        RefThumb(image: image) {
+                            model.updateCurrent { if $0.refs.indices.contains(index) { $0.refs.remove(at: index) } }
+                        }
                     }
                     Button { model.addRefs(ImageSource.open(multiple: true)) } label: {
                         Image(systemName: "plus")
@@ -157,7 +173,11 @@ private struct ReferencesSection: View {
             .scrollIndicators(.never)
             HStack(spacing: 6) {
                 Image(systemName: "link").font(.system(size: 12)).foregroundStyle(.secondary)
-                TextField("Figma URL", text: $model.figmaURL).textFieldStyle(.plain)
+                TextField("Figma URL", text: Binding(
+                    get: { model.current?.figmaURL ?? "" },
+                    set: { value in model.updateCurrent { $0.figmaURL = value } }
+                ))
+                .textFieldStyle(.plain)
             }
             .padding(.horizontal, 8)
             .frame(height: 28)

@@ -33,6 +33,32 @@ enum ImageCodec {
     }
 }
 
+enum BoardComposer {
+    static let gapColor: UInt32 = 0xE5E5EA
+
+    static func compose(_ images: [CGImage]) -> CGImage? {
+        if images.count == 1 { return images[0] }
+        let sizes = images.map { CGSize(width: $0.width, height: $0.height) }
+        let board = BoardLayout.size(for: sizes)
+        guard let context = CGContext(
+            data: nil,
+            width: Int(board.width),
+            height: Int(board.height),
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+        context.setFillColor(AnnotationDrawing.cgColor(gapColor))
+        context.fill(CGRect(origin: .zero, size: board))
+        for (image, offset) in zip(images, BoardLayout.offsets(for: sizes)) {
+            let flippedY = board.height - offset.y - CGFloat(image.height)
+            context.draw(image, in: CGRect(x: offset.x, y: flippedY, width: CGFloat(image.width), height: CGFloat(image.height)))
+        }
+        return context.makeImage()
+    }
+}
+
 enum AnnotationDrawing {
     static func render(runtime: CGImage, marks: [Mark], frame: Int = 0, highlight: Int?) -> CGImage? {
         let width = runtime.width
@@ -128,7 +154,7 @@ enum AnnotationDrawing {
         return context.makeImage()
     }
 
-    private static func cgColor(_ rgb: UInt32) -> CGColor {
+    static func cgColor(_ rgb: UInt32) -> CGColor {
         CGColor(
             colorSpace: CGColorSpaceCreateDeviceRGB(),
             components: [

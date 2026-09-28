@@ -5,15 +5,16 @@ import UIBoardCore
 struct EditorView: View {
     @Environment(EditorModel.self) private var model
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.openSettings) private var openSettings
     @State private var monitor: Any?
 
     var body: some View {
-        @Bindable var model = model
-        HStack(spacing: 0) {
-            CanvasView()
-            Divider()
-            InspectorView()
+        VStack(spacing: 0) {
+            if !model.boards.isEmpty { TabBarView() }
+            HStack(spacing: 0) {
+                CanvasView()
+                Divider()
+                InspectorView()
+            }
         }
         .frame(minWidth: 900, minHeight: 600)
         .background(WindowAccessor { model.window = $0 })
@@ -27,33 +28,7 @@ struct EditorView: View {
         .onDisappear {
             if let monitor { NSEvent.removeMonitor(monitor) }
         }
-        .alert(model.pendingReplacement?.runtime == nil ? "Discard this review?" : "Replace screenshot?",
-               isPresented: Binding(get: { model.pendingReplacement != nil }, set: { if !$0 { model.pendingReplacement = nil } }),
-               presenting: model.pendingReplacement) { replacement in
-            Button("Cancel", role: .cancel) {}
-            Button(replacement.runtime == nil ? "Discard" : "Replace", role: .destructive) { model.apply(replacement) }
-        } message: { _ in
-            Text("This will clear \(model.marks.count) annotations.")
-        }
-        .alert("adb not found", isPresented: $model.adbMissing) {
-            Button("Open Settings") { openSettings() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Install Android platform-tools, or choose the adb binary in Settings.")
-        }
-        .alert("UIBoard", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } }),
-               presenting: model.errorMessage) { _ in
-            Button("OK") {}
-        } message: { message in
-            Text(message)
-        }
-        .sheet(isPresented: Binding(get: { model.exportedURL != nil }, set: { if !$0 { model.exportedURL = nil } })) {
-            if let url = model.exportedURL {
-                ExportSheet(url: url,
-                            onCopy: { model.exportedURL = nil; model.show("Path copied") },
-                            onClose: { model.exportedURL = nil })
-            }
-        }
+        .modifier(EditorAlerts())
     }
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
@@ -74,15 +49,21 @@ struct EditorView: View {
                       systemImage: model.selectedDevice?.isOnline == true ? "iphone" : "iphone.slash")
             }
             .help("Device")
-            Button { Task { await model.capture() } } label: {
+            Menu {
+                Button("New Tab  ⌘⇧A") { Task { await model.capture(to: .newBoard) } }
+                Button("Add to This Board  ⌘⌥A") { Task { await model.capture(to: .currentBoard) } }
+                    .disabled(model.current == nil)
+            } label: {
                 Label("Capture", systemImage: "camera.viewfinder")
+            } primaryAction: {
+                Task { await model.capture(to: .newBoard) }
             }
-            .help("Capture from device (⌘⇧A)")
+            .help("Capture to a new tab (⌘⇧A) · add to this board (⌘⌥A)")
             .disabled(model.isCapturing)
-            Button { model.importRuntime() } label: {
+            Button { model.importImages(to: .newBoard) } label: {
                 Label("Import", systemImage: "square.and.arrow.down")
             }
-            .help("Import a screenshot (⌘O)")
+            .help("Import screenshots into new tabs (⌘O)")
             if model.isCapturing || model.isFetchingFacts {
                 ProgressView().controlSize(.small)
             }
@@ -98,7 +79,74 @@ struct EditorView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!model.canExport)
-            .help("Export (⌘E)")
+            .help("Export this tab (⌘E)")
+        }
+    }
+}
+
+private struct EditorAlerts: ViewModifier {
+    @Environment(EditorModel.self) private var model
+    @Environment(\.openSettings) private var openSettings
+
+    func body(content: Content) -> some View {
+        @Bindable var model = model
+        content
+            .alert(removalTitle, isPresented: removalBinding, presenting: model.pendingRemoval) { removal in
+                Button("Cancel", role: .cancel) {}
+                Button(removalAction(removal), role: .destructive) { model.confirm(removal) }
+            } message: { removal in
+                Text(removalMessage(removal))
+            }
+            .alert("adb not found", isPresented: $model.adbMissing) {
+                Button("Open Settings") { openSettings() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Install Android platform-tools, or choose the adb binary in Settings.")
+            }
+            .alert("UIBoard", isPresented: errorBinding, presenting: model.errorMessage) { _ in
+                Button("OK") {}
+            } message: { message in
+                Text(message)
+            }
+            .sheet(isPresented: exportBinding) {
+                if let url = model.exportedURL {
+                    ExportSheet(url: url,
+                                onCopy: { model.exportedURL = nil; model.show("Path copied") },
+                                onClose: { model.exportedURL = nil })
+                }
+            }
+    }
+
+    private var removalBinding: Binding<Bool> {
+        Binding(get: { model.pendingRemoval != nil }, set: { if !$0 { model.pendingRemoval = nil } })
+    }
+
+    private var errorBinding: Binding<Bool> {
+        Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
+    }
+
+    private var exportBinding: Binding<Bool> {
+        Binding(get: { model.exportedURL != nil }, set: { if !$0 { model.exportedURL = nil } })
+    }
+
+    private var removalTitle: String {
+        if case let .frame(_, index) = model.pendingRemoval { return "Remove frame \(Frame.label(at: index))?" }
+        return "Close this tab?"
+    }
+
+    private func removalAction(_ removal: PendingRemoval) -> String {
+        if case .frame = removal { return "Remove" }
+        return "Close"
+    }
+
+    private func removalMessage(_ removal: PendingRemoval) -> String {
+        switch removal {
+        case let .board(id):
+            let count = model.boards.first { $0.id == id }?.marks.count ?? 0
+            return "Its \(count) annotations haven't been exported."
+        case let .frame(board, index):
+            let count = model.boards.first { $0.id == board }?.marks.filter { $0.frame == index }.count ?? 0
+            return "Its \(count) annotations will be deleted."
         }
     }
 }

@@ -2,7 +2,7 @@
 
 **基线**: [V1 实施计划](file:///Users/loopq/dev/git/loopq/uiboard/docs/plans/2026-09-24-uiboard-impl.md)（第 5 节契约在本计划中被扩展，冲突处以本文件为准）
 
-状态：实施中。
+状态：实现完成，自动验证通过；待用户真机验收（⌘⇧A / ⌘⌥A / 「+」格 / 关闭确认 / v2 导出后跑 /ui-review）。
 
 ## 1. 核心判断
 
@@ -123,36 +123,42 @@ frames:
 
 ### T0 契约（Claude，main）
 
-- [ ] 更新 `Model.swift`（`Frame`、`Mark.frame`、`Review.frames` 与两个 init）、`API.swift`（`BoardLayout` 签名、渲染器 `frame` 参数），现有实现保持可编译、V1 测试全绿。
-- [ ] `golden-input-v2.json` + `golden-review-v2.md`（手算）；`review-format.md` 增加 v2 小节。
-- [ ] 提交基线，建 `main_frames` worktree。
+- [x] 更新 `Model.swift`（`Frame`、`Mark.frame`、`Review.frames` 与两个 init）、`API.swift`（`BoardLayout` 签名、渲染器 `frame` 参数），现有实现保持可编译、V1 测试全绿。
+- [x] `golden-input-v2.json` + `golden-review-v2.md`（手算）；`review-format.md` 增加 v2 小节。
+- [x] 提交基线，建 `main_frames` worktree。
 
 ### Lane Core（Codex，worktree `main_frames`）
 
-- [ ] C1 `BoardLayout` 实现；渲染器按帧过滤 + 全局编号 + 帧内 clamp。
-- [ ] C2 导出：单帧走 V1 原路径；多帧写拼图 runtime / annotated、帧内 crops、`hierarchy-X.xml`、v2 markdown。
-- [ ] 测试：v1 golden 逐字不变；v2 golden 逐字一致；拼图尺寸与帧 B 像素出现在 offset 处；渲染器只画指定帧的标注且编号全局；多帧导出目录内容完整。
+- [x] C1 `BoardLayout` 实现；渲染器按帧过滤 + 全局编号 + 帧内 clamp。
+- [x] C2 导出：单帧走 V1 原路径；多帧写拼图 runtime / annotated、帧内 crops、`hierarchy-X.xml`、v2 markdown。
+- [x] 测试：v1 golden 逐字不变；v2 golden 逐字一致；拼图尺寸与帧 B 像素出现在 offset 处；渲染器只画指定帧的标注且编号全局；多帧导出目录内容完整。
 
 ### Lane UI（Claude，main）
 
-- [ ] U1 `EditorModel` 改为 `boards: [Board]` + `current`；设备事实任务按帧 id 回填（取代 token）；Board 的标注 / 参考图 / Figma / 帧任何修改都清除「已导出」状态。
-- [ ] U2 标签栏：缩略图、标题、问题数 / ✓、×（悬停或选中时显示）；拖入标签栏新建；⌘W / ⌘⇧[ / ⌘⇧]。
-- [ ] U3 画板：帧横排（间距按 `BoardLayout.gap` 缩放）、帧头「A ×」（单帧时不显示 ×）、每帧独立渲染与手势、「+」格（菜单 + 拖入）、卡片在多帧时显示帧字母。
-- [ ] U4 Capture 分体按钮（`Menu(primaryAction:)`）、⌘⌥A、按第 3 节路由所有输入；删除替换确认与 ⌘N。
-- [ ] U5 关闭有未导出标注的标签要确认；删除有标注的帧要确认；退出时有未导出画板要确认（`applicationShouldTerminate`）。
-- [ ] U6 History 缩略图改为 aspect fit（多帧拼图较宽）。
+- [x] U1 `EditorModel` 改为 `boards: [Board]` + `current`；设备事实任务按帧 id 回填（取代 token）；Board 的标注 / 参考图 / Figma / 帧任何修改都清除「已导出」状态。
+- [x] U2 标签栏：缩略图、标题、问题数 / ✓、×（悬停或选中时显示）；拖入标签栏新建；⌘W / ⌘⇧[ / ⌘⇧]。
+- [x] U3 画板：帧横排（间距按 `BoardLayout.gap` 缩放）、帧头「A ×」（单帧时不显示 ×）、每帧独立渲染与手势、「+」格（菜单 + 拖入）、卡片在多帧时显示帧字母。
+- [x] U4 Capture 分体按钮（`Menu(primaryAction:)`）、⌘⌥A、按第 3 节路由所有输入；删除替换确认与 ⌘N。
+- [x] U5 关闭有未导出标注的标签要确认；删除有标注的帧要确认；退出时有未导出画板要确认（`applicationShouldTerminate`）。
+- [x] U6 History 缩略图改为 aspect fit（多帧拼图较宽）。
 
 ### Skill（Claude）
 
-- [ ] 读取 v1 / v2 两种格式：v2 读 `frames`，按 issue 的 `frame` 取该帧的 density / activity / `hierarchy-X.xml`；定位时 activity 按帧取。
-- [ ] 一次传多个 review 目录时，关联表的 # 前缀加目录名，例如 `10-33-49#1`。
+- [x] 读取 v1 / v2 两种格式：v2 读 `frames`，按 issue 的 `frame` 取该帧的 density / activity / `hierarchy-X.xml`；定位时 activity 按帧取。
+- [x] 一次传多个 review 目录时，关联表的 # 前缀加目录名，例如 `10-33-49#1`。
 
 ### 集成
 
-- [ ] `/apply-worktree main_frames`；`swift build && swift test && scripts/bundle.sh`。
-- [ ] 临时调试钩子端到端（验证后删除）：2 个标签，其中一个 2 帧，每帧都有标注；截图检查标签栏、画板、导出目录与 v2 review.md。
+- [x] ~~`/apply-worktree main_frames`~~ 未用 worktree（见下方记录）；`swift build && swift test && scripts/bundle.sh` 通过。
+
+  执行记录（2026-09-28）：
+  - Codex 两次派发都异常退出（第一次跑到一半、第二次立即退出），连最简单的只读探测都没有输出；同一会话里 Codex CLI 从 0.156.1 自动升级到了 0.157.1，推测是升级导致 `ask_codex.sh` 包装脚本失效。空的 `main_frames` worktree 已清理，Core lane 改由 Claude 在 main 上完成。
+  - 26 个测试通过（新增 `BoardTests` 5 个：BoardLayout、拼图偏移与空隙色、按帧渲染与全局编号、v2 golden 逐字节、多帧导出目录）；v1 golden 不变。
+  - 调试钩子端到端（钩子已删除，不入库）：2 个标签（其中一个 2 帧、3 个标注）→ 导出为 v2（拼图 2225×2400，编号 A:#1 #3、B:#2）→ 标签显示 ✓；导出后再修改会自动清除 ✓；关闭有未导出标注的标签、删除带标注的帧都会弹确认；删除 B 帧后，它的标注被删、其余标注的帧号正确；菜单只剩一个 ⌘W（Close Tab）。
+  - 端到端中发现并修复：帧头被 `Spacer` 撑宽，和帧不对齐（改成固定为帧宽）；`borderlessButton` 样式的 Menu 会把「+」格压成一行文字（改为 `.menuStyle(.button)` + `.buttonStyle(.plain)`）。
+- [x] 临时调试钩子端到端（验证后删除）：2 个标签，其中一个 2 帧，每帧都有标注；截图检查标签栏、画板、导出目录与 v2 review.md。
 - [ ] 用户真机：⌘⇧A 新标签、⌘⌥A 追加、「+」格、关闭确认、导出后跑 `/ui-review`。
-- [ ] `scripts/install-app.sh` 更新「应用程序」里的版本。
+- [x] `scripts/install-app.sh` 更新「应用程序」里的版本。
 
 ## 7. 验收
 
