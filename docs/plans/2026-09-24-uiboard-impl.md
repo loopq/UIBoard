@@ -282,17 +282,17 @@ spike 记录：（T0.4 / T0.6 完成后填写）
 
 ### Lane Core（Codex，worktree）
 
-- [ ] C1 导出链路（`ImageIngest` / `AnnotationRenderer` / `Crop` / `ReviewMarkdown` / `ReviewExporter`）：
+- [x] C1 导出链路（`ImageIngest` / `AnnotationRenderer` / `Crop` / `ReviewMarkdown` / `ReviewExporter`）：
   - `decode`：ImageIO 解码任意 PNG / JPG / TIFF / HEIC，解码失败抛错；`png`：ImageIO 编码 PNG。
   - 渲染严格按 5.5；输出像素尺寸 = runtime 尺寸。
   - 导出严格按 5.3；`hits` 由 `HitTest` 按 mark 计算后传入 markdown。
   - 测试（行为，不测源码文本）：markdown 与 `golden-review.md` 逐字一致；`facts == nil` 时不输出 `source/device/density/activity/dp/views` 行；无 figma / 无 refs 时对应 frontmatter 行消失；crop 在四角边界被正确 clamp、Pin 得到 `2pad` 正方形；渲染输出尺寸等于输入；导出后目录内容完整、无残留 `.tmp` 目录；同秒二次导出得到 `-2`；导出中途失败（不可写目录）不留下正式目录。
-- [ ] C2 ADB 与命中测试（`ProcessRunner` / `Adb` / `HitTest`）：
+- [x] C2 ADB 与命中测试（`ProcessRunner` / `Adb` / `HitTest`）：
   - `ProcessRunner.run(executable:args:timeout:) async throws -> (stdout: Data, stderr: Data, status: Int32)`：先并发读尽两个管道再等退出；超时 `terminate` 并抛超时错误。
   - `Adb.locate` 按第 3 节顺序探测，检查 `isExecutableFile`。
   - 解析函数全部为纯函数，输入 T0.4 fixture。
   - 测试：`devices -l` 解析出 serial / model / state（含 unauthorized、offline）；density 优先 Override；activity 从 dumpsys 行取出 component；uiautomator 输出去尾；`HitTest` 在 fixture 上对一个已知框返回正确 resource-id 排第一、Pin 返回包含该点的最小节点、`android:id/*` 被排除；`ProcessRunner` 对产生 > 1MB 输出的命令（如 `head -c 2000000 /dev/zero`）不死锁、对 `sleep 5` 在 1s 超时。
-- [ ] C3 `HistoryScanner`：扫描 `workspace/YYYY-MM-DD/HH-mm-ss*`，要求目录内存在 `review.md`，忽略点目录与不匹配命名的目录，日期降序、时间降序。测试用临时目录构造正常 / 点目录 / 缺 review.md / 非法命名四种情况。
+- [x] C3 `HistoryScanner`：扫描 `workspace/YYYY-MM-DD/HH-mm-ss*`，要求目录内存在 `review.md`，忽略点目录与不匹配命名的目录，日期降序、时间降序。测试用临时目录构造正常 / 点目录 / 缺 review.md / 非法命名四种情况。
 
 ### Lane UI（Claude，worktree）
 
