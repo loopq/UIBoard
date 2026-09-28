@@ -2,7 +2,7 @@
 
 **产品基线**: [原始方案](file:///Users/loopq/dev/git/loopq/uiboard/docs/plans/2026-09-24-uiboard-product.md) · **原型 Prompt**: [Claude Design](file:///Users/loopq/dev/git/loopq/uiboard/docs/plans/2026-09-24-uiboard-design-prompt.md)
 
-状态：plan 待确认。仓库 `/Users/loopq/dev/git/loopq/uiboard`（已 `git init`，无提交）。本文件自包含：契约、任务、验收、Skill 规格全部内联；产品基线只作为背景，凡与本文件冲突以本文件为准。
+状态：实施中。T0（除真机项）、Lane Core、Lane UI、I1 已完成；待真机 spike（T0.4/T0.6）、S1、I2 与人工验收。仓库 `/Users/loopq/dev/git/loopq/uiboard`，remote `git@github.com:loopq/UIBoard.git`（push 由用户执行）。本文件自包含：契约、任务、验收、Skill 规格全部内联；产品基线只作为背景，凡与本文件冲突以本文件为准。
 
 ## 1. 核心判断
 
@@ -334,19 +334,19 @@ spike 记录：（T0.4 / T0.6 完成后填写）
 | History | 窗口 900×640，内边距 24；日期组间距 32；日期 13 bold + 计数胶囊；网格间距 24，距日期 12；缩略图 120×267，圆角 6，1pt 描边；hover 时改为 2pt accent 描边，右上角内缩 6 处浮出两个 24pt 圆形按钮（白 96% 底 + 轻阴影，图标 13）；时间 11 secondary |
 | Settings | 560×260，内边距 24；标签列宽 80；路径 SF Mono 12；`Auto-detected` 标签 11 medium，文字 `#1E8A3C`，底色 `#34C759` 15%，圆角 4；表单下方说明 11 secondary，距表单 8 |
 
-- [ ] U1 App 外壳：`@main` App、主窗口（默认 1280×820）、统一 toolbar、`@Observable EditorModel`、空状态拖放区、Settings（⌘,）：workspace 目录（默认 `~/UIReview`，选择面板）、adb 路径覆盖；菜单「打开 UIReview 文件夹」。激活策略按第 4 节。
-- [ ] U2 编辑器：
+- [x] U1 App 外壳：`@main` App、主窗口（默认 1280×820）、统一 toolbar、`@Observable EditorModel`、空状态拖放区、Settings（⌘,）：workspace 目录（默认 `~/UIReview`，选择面板）、adb 路径覆盖；菜单「打开 UIReview 文件夹」。激活策略按第 4 节。
+- [x] U2 编辑器（代码完成；交互手感待第 9 节人工验收）：
   - 画布显示 `AnnotationRenderer.render(..., highlight: selected)` 的结果，按比例 fit；视图坐标 ↔ 图片像素换算集中在一个函数。
   - 鼠标：位移 < 4pt 视为点击 → Pin；否则拖拽 → 框；拖拽中把「进行中的框」作为临时 mark 交给同一渲染器预览。画布点击永远新建标记，**画布上不做选中/拖动**（避免与「在框内再点 Pin」冲突）。
   - 新增 mark 后右侧自动出现卡片并聚焦其描述框。卡片：彩色编号徽标 + 多行描述 + × 删除；点卡片 = 选中（画布高亮）；选中后 ⌫（非编辑态）删除。
   - 输入规则：拖到画布 → runtime；拖到 References 区 → ref；⌘O → runtime；⌘V 按第 2 节规则，用 `NSEvent.addLocalMonitorForEvents(.keyDown)` 判断 first responder 是否为 `NSText`，是则放行；追加 ref 时给轻提示。
   - 已有标记时替换 runtime（截图 / 拖入 / ⌘O / ⌘N）弹确认「将清空 N 个标注」。
   - 右侧底部：References 缩略图条（+ 选择文件、拖入、hover ×）；Figma URL 单行输入（trim）。
-- [ ] U3 设备、截图、导出：
+- [x] U3 设备、截图、导出（代码完成；ADB 全链路待接设备验收）：
   - toolbar 设备 `Menu`：列出设备与状态（非 `device` 状态禁用）、Refresh（⌘R）；启动时读一次；UserDefaults 记住 `lastDeviceSerial`；记住的设备不在线时不自动切换；无记忆且只有一台在线时自动选中。
   - Capture（⌘⇧A）：`screencap` → `decode` → 进入编辑器；随后后台抓 `facts`，toolbar 显示小进度。adb 未找到时弹窗引导去 Settings。
   - Export（⌘E）：无 runtime 或无 mark 时禁用；存在空描述时阻止并聚焦第一张空卡片；等待事实任务结束后调用 `ReviewExporter.export`；成功 sheet 显示路径，按钮 `Copy Path`（默认，⏎）与 `Reveal in Finder`；失败显示错误原文。导出后保留当前内容，⌘N 新建。
-- [ ] U4 History 窗口（⌘Y，独立 `Window` scene）：`HistoryScanner` 结果按日期分组；缩略图用 `CGImageSourceCreateThumbnailAtIndex` 读 `annotated.png`；显示时间；每项 `Copy Path` / `Reveal in Finder` / 双击用默认应用打开 `annotated.png`。窗口出现时重新扫描。只读。
+- [x] U4 History 窗口（⌘Y，独立 `Window` scene）：`HistoryScanner` 结果按日期分组；缩略图用 `CGImageSourceCreateThumbnailAtIndex` 读 `annotated.png`；显示时间；每项 `Copy Path` / `Reveal in Finder` / 双击用默认应用打开 `annotated.png`。窗口出现时重新扫描。只读。
 
 ### Lane Skill
 
@@ -354,7 +354,14 @@ spike 记录：（T0.4 / T0.6 完成后填写）
 
 ### 集成
 
-- [ ] I1 `/apply-worktree` 合回 Core 与 UI lane；在主 checkout 跑 `swift build && swift test && scripts/bundle.sh`。
+- [x] I1 `/apply-worktree` 合回 Core 与 UI lane；在主 checkout 跑 `swift build && swift test && scripts/bundle.sh`。
+
+  I1 记录（2026-09-28）：
+  - `main_core`（Codex，`0f30e96`）cherry-pick 为 main `d47d862`，worktree 已清理。合入前审过全部 Core 代码；实测 adb server 冷启动不会占住 stdout 管道，`ProcessRunner` 无挂起风险；daemon 提示走 stderr，设备解析安全。
+  - `swift build` 通过、`swift test` 19 项通过、`scripts/bundle.sh` 通过。
+  - 自动化端到端：用临时调试钩子驱动真实 `EditorModel`（钩子已删除，不入库），流程为粘贴截图 → 2 框 + 1 Pin → 2 张 ref → Figma URL → `export()` → 打开 History / Settings；App 自绘窗口快照（不需要屏幕录制权限）。已验证：浅色 / 深色渲染；屏幕预览与 `annotated.png` 标注一致；review.md 在无设备事实时省略 `source/dp/views`；crop 坐标与裁剪内容正确；History 分组、缩略图与时间显示。
+  - 端到端发现并修复两处：macOS 上 `.primaryAction` 会被放到 toolbar 左侧，改为 `.automatic` + `Spacer()`；History 时间由目录名 `10-03-20` 改为显示 `10:03:20`。
+  - 待人工：点击 / 拖拽标注手感、⌘V 三种去处、拖放、删除与 ⌫、替换确认、Copy Path / Reveal、ADB 全链路（当前无设备）。
 - [ ] I2 端到端：Finder 双击 `build/UIBoard.app`（验证 GUI 环境下 adb 探测）→ 连接设备 → ⌘⇧A → 标 3 个问题（含 Pin）→ 加 1 张 Figma 复制的 ref（⌘V）→ 填 Figma URL → ⌘E → Copy Path → 在 Avatar-Android 分别跑 Claude `/ui-review` 与 Codex `$ui-review`，得到关联表与 plan。
 
 ## 8. Skill 规格
@@ -468,11 +475,11 @@ done
 
 ### Reference / Figma
 - [ ] ref 可通过 ⌘V（已有 runtime 时）、拖入、选择文件添加，可删除
-- [ ] Figma URL 可保存到 review.md
+- [x] Figma URL 可保存到 review.md
 
 ### Export
-- [ ] 目录结构与 review.md 严格符合 5.3 / 5.4；`swift test` golden 通过
-- [ ] annotated.png 与屏幕预览一致，编号在 Claude 下采样后仍清晰可读
+- [x] 目录结构与 review.md 严格符合 5.3 / 5.4；`swift test` golden 通过
+- [x] annotated.png 与屏幕预览一致，编号在 Claude 下采样后仍清晰可读
 - [ ] 空描述阻止导出；导出过程中无 `.tmp` 目录残留
 - [ ] 成功 sheet：Copy Path（默认）/ Reveal in Finder
 

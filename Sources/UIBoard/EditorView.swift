@@ -87,7 +87,8 @@ struct EditorView: View {
                 ProgressView().controlSize(.small)
             }
         }
-        ToolbarItemGroup(placement: .primaryAction) {
+        ToolbarItemGroup(placement: .automatic) {
+            Spacer()
             Button { openWindow(id: "history") } label: {
                 Label("History", systemImage: "clock")
             }

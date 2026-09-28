@@ -44,6 +44,12 @@ private struct HistoryCell: View {
 
     private var annotated: URL { item.dir.appendingPathComponent("annotated.png") }
 
+    private var timeLabel: String {
+        let parts = item.time.split(separator: "-")
+        let clock = parts.prefix(3).joined(separator: ":")
+        return parts.count > 3 ? "\(clock) (\(parts[3]))" : clock
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
@@ -64,7 +70,7 @@ private struct HistoryCell: View {
                     .padding(6)
                 }
             }
-            Text(item.time).font(.system(size: 11)).foregroundStyle(.secondary).monospacedDigit()
+            Text(timeLabel).font(.system(size: 11)).foregroundStyle(.secondary).monospacedDigit()
         }
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
