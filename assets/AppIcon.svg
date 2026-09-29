@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B3A66"/><stop offset="1" stop-color="#141328"/></linearGradient>
+  <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="18" cy="18" r="2.6" fill="rgba(255,255,255,0.08)"/></pattern>
+  <clipPath id="sq"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
+  <clipPath id="scr"><rect width="352" height="672" rx="44"/></clipPath>
+  <filter id="icon" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="10" stdDeviation="10" flood-opacity="0.28"/></filter>
+  <filter id="ph" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="22" stdDeviation="26" flood-opacity="0.30"/></filter>
+  <filter id="bs" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.25"/></filter>
+</defs>
+<g filter="url(#icon)"><rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/></g>
+<g clip-path="url(#sq)">
+  <rect x="100" y="100" width="824" height="824" fill="url(#dots)"/>
+  <g transform="translate(512 600.0) rotate(-9.0) scale(1.32) translate(-512 -522)">
+    <g filter="url(#ph)"><rect x="322" y="172" width="380" height="700" rx="58" fill="#0A0A14" stroke="rgba(255,255,255,0.22)" stroke-width="3"/></g>
+    <g transform="translate(336 186)">
+      <g clip-path="url(#scr)"><rect width="352" height="672" rx="44" fill="#F7F4FE"/>
+<circle cx="58" cy="92" r="30" fill="#FFC7D8"/>
+<rect x="102" y="74" width="136" height="18" rx="9" fill="#1C1B2E"/>
+<rect x="102" y="102" width="84" height="12" rx="6" fill="#8A8799" opacity="0.7"/>
+<circle cx="304" cy="92" r="22" fill="#ECE3FF"/>
+<rect x="24" y="152" width="304" height="46" rx="23" fill="#7B5CF6"/>
+<rect x="24" y="152" width="160" height="46" rx="23" fill="#FFD43B"/>
+<rect x="24" y="226" width="144" height="168" rx="18" fill="#FFE0EA"/><circle cx="96" cy="288" r="24" fill="#fff" opacity="0.85"/><path d="M54 354 a42 38 0 0 1 84 0 z" fill="#fff" opacity="0.85"/><rect x="24" y="354" width="144" height="40" fill="#fff"/><rect x="38" y="367" width="76" height="12" rx="6" fill="#1C1B2E" opacity="0.75"/><rect x="184" y="226" width="144" height="168" rx="18" fill="#E0EEFF"/><circle cx="256" cy="288" r="24" fill="#fff" opacity="0.85"/><path d="M214 354 a42 38 0 0 1 84 0 z" fill="#fff" opacity="0.85"/><rect x="184" y="354" width="144" height="40" fill="#fff"/><rect x="198" y="367" width="76" height="12" rx="6" fill="#1C1B2E" opacity="0.75"/><rect x="24" y="410" width="144" height="168" rx="18" fill="#E3F6E6"/><circle cx="96" cy="472" r="24" fill="#fff" opacity="0.85"/><path d="M54 538 a42 38 0 0 1 84 0 z" fill="#fff" opacity="0.85"/><rect x="24" y="538" width="144" height="40" fill="#fff"/><rect x="38" y="551" width="76" height="12" rx="6" fill="#1C1B2E" opacity="0.75"/><rect x="184" y="410" width="144" height="168" rx="18" fill="#FFF3D6"/><circle cx="256" cy="472" r="24" fill="#fff" opacity="0.85"/><path d="M214 538 a42 38 0 0 1 84 0 z" fill="#fff" opacity="0.85"/><rect x="184" y="538" width="144" height="40" fill="#fff"/><rect x="198" y="551" width="76" height="12" rx="6" fill="#1C1B2E" opacity="0.75"/>
+<rect x="0" y="602" width="352" height="70" fill="#fff"/>
+<circle cx="64" cy="632" r="11" fill="#7B5CF6"/><circle cx="140" cy="632" r="11" fill="#C9C5D6"/>
+<circle cx="212" cy="632" r="11" fill="#C9C5D6"/><circle cx="288" cy="632" r="11" fill="#C9C5D6"/>
+<rect x="136" y="656" width="80" height="6" rx="3" fill="#1C1B2E"/></g>
+      <!-- #1 frame around tab pill -->
+      <rect x="12" y="140" width="328" height="70" rx="6" fill="none" stroke="#FF3B30" stroke-width="14"/>
+      <!-- #2 pin on bottom-right tile -->
+      <circle cx="256" cy="472" r="19" fill="none" stroke="#0A84FF" stroke-width="12"/>
+      <line x1="268" y1="460" x2="358" y2="370" stroke="#0A84FF" stroke-width="10" stroke-linecap="round"/>
+      <g filter="url(#bs)"><circle cx="12" cy="140" r="56" fill="#FF3B30" stroke="#fff" stroke-width="12"/></g>
+<text x="12" y="164" text-anchor="middle" font-family="Helvetica Neue" font-weight="bold" font-size="70" fill="#fff">1</text>
+      <g filter="url(#bs)"><circle cx="366" cy="362" r="56" fill="#0A84FF" stroke="#fff" stroke-width="12"/></g>
+<text x="366" y="386" text-anchor="middle" font-family="Helvetica Neue" font-weight="bold" font-size="70" fill="#fff">2</text>
+    </g>
+  </g>
+</g>
+</svg>

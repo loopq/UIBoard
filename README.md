@@ -6,6 +6,27 @@ UIBoard 是一个 macOS 小工具：把 App 运行截图上的 UI 问题标成 #
 - 视觉稿：`docs/design/A–H*.png`，源码 `docs/design/claude-design/`。
 - 所有回复与文档使用简体中文；代码标识保持英文。
 
+## 下载安装
+
+仅支持 Apple Silicon、macOS 14+。先退出正在运行的 UIBoard，再在终端执行（更新也用这条命令）：
+
+```bash
+curl -fL https://github.com/loopq/UIBoard/releases/latest/download/UIBoard.zip -o /tmp/UIBoard.zip && rm -rf /Applications/UIBoard.app && ditto -x -k /tmp/UIBoard.zip /Applications && open /Applications/UIBoard.app
+```
+
+App 没有经过 Apple 公证。用终端 `curl` 下载不会被 Gatekeeper 拦截。如果是从 [Releases](https://github.com/loopq/UIBoard/releases) 页面用浏览器下载的，第一次打开会提示「Apple 无法验证」，下面两种方式任选一种：
+
+- 打开「系统设置 → 隐私与安全性」，在页面底部点「仍要打开」；
+- 或者执行 `xattr -dr com.apple.quarantine /Applications/UIBoard.app`。
+
+配套的 `ui-review` skill（Claude 用 `/ui-review`，Codex 用 `$ui-review`）这样安装：
+
+```bash
+git clone https://github.com/loopq/UIBoard.git && UIBoard/scripts/install-skill.sh
+```
+
+安装的 skill 是指向仓库目录的 symlink，之后在仓库里 `git pull` 即可更新。
+
 ## 构建与验证
 
 每个任务完成后必须全部通过：
@@ -19,6 +40,8 @@ scripts/bundle.sh        # 产出 build/UIBoard.app
 调试运行：`swift run UIBoard`，或直接打开 `build/UIBoard.app`。
 
 安装 / 更新到「应用程序」：`scripts/install-app.sh`（先退出正在运行的 UIBoard；脚本会重新打包并覆盖 `/Applications/UIBoard.app`）。
+
+发布 GitHub Release：`scripts/release.sh 1.2.0`（需先 `gh auth login`，且 HEAD 已推送到 origin/main；产物是 `UIBoard.zip`）。改图标：编辑 `assets/AppIcon.svg`，然后运行 `scripts/make-icon.sh`。
 
 ## 目录归属（并行 lane）
 

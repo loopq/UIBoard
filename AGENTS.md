@@ -20,6 +20,8 @@ scripts/bundle.sh        # 产出 build/UIBoard.app
 
 安装 / 更新到「应用程序」：`scripts/install-app.sh`（先退出正在运行的 UIBoard；脚本会重新打包并覆盖 `/Applications/UIBoard.app`）。
 
+发布 GitHub Release：`scripts/release.sh 1.2.0`（需先 `gh auth login`，且 HEAD 已推送到 origin/main；产物是 `UIBoard.zip`）。改图标：编辑 `assets/AppIcon.svg`，然后运行 `scripts/make-icon.sh`。
+
 ## 目录归属（并行 lane）
 
 | 目录 | 归属 |
