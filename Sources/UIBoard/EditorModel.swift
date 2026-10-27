@@ -55,7 +55,7 @@ enum Destination {
 }
 
 enum PendingRemoval {
-    case board(UUID)
+    case boards([UUID])
     case frame(board: UUID, index: Int)
 }
 
@@ -204,16 +204,19 @@ final class EditorModel {
         select(board: boards[(index + step + boards.count) % boards.count].id)
     }
 
-    func requestClose(_ id: UUID) {
-        guard let board = boards.first(where: { $0.id == id }) else { return }
-        if board.isDirty { pendingRemoval = .board(id) } else { close(id) }
+    func requestClose(_ ids: [UUID]) {
+        if boards.contains(where: { ids.contains($0.id) && $0.isDirty }) {
+            pendingRemoval = .boards(ids)
+        } else {
+            ids.forEach(close)
+        }
     }
 
     func requestCloseCurrent() {
         if let keyWindow = NSApp.keyWindow, keyWindow !== window {
             keyWindow.performClose(nil)
         } else if let id = currentID {
-            requestClose(id)
+            requestClose([id])
         }
     }
 
@@ -229,7 +232,7 @@ final class EditorModel {
     func confirm(_ removal: PendingRemoval) {
         pendingRemoval = nil
         switch removal {
-        case let .board(id): close(id)
+        case let .boards(ids): ids.forEach(close)
         case let .frame(board, index): removeFrame(index, board: board)
         }
     }

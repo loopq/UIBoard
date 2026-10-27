@@ -8,6 +8,9 @@ struct TabBarView: View {
     var body: some View {
         // No ScrollView: a horizontal ScrollView pinned right under the unified toolbar never receives clicks
         // (verified with queued mouse events). Overflowing tabs truncate/clip; the trailing menu reaches every tab.
+        // minWidth: 0 is load-bearing: without it the frame grows to the fixed-size row's full width, the bar
+        // overflows and gets centered, and the menu is pushed off-window. Ceiling: a selected tab past the right
+        // edge stays clipped (reach it via the menu); upgrade path is scrolling the row to keep it visible.
         HStack(spacing: 0) {
             HStack(spacing: 0) {
                 ForEach(model.boards) { board in
@@ -16,7 +19,7 @@ struct TabBarView: View {
                 }
             }
             .fixedSize(horizontal: true, vertical: false)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             .clipped()
             Menu {
                 ForEach(model.boards) { board in
@@ -91,7 +94,7 @@ private struct TabChip: View {
             .buttonStyle(.plain)
             .accessibilityLabel(board.title)
             .accessibilityAddTraits(selected ? .isSelected : [])
-            Button { model.requestClose(board.id) } label: {
+            Button { model.requestClose([board.id]) } label: {
                 Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).frame(width: 16, height: 16)
             }
             .buttonStyle(.plain)
@@ -109,7 +112,9 @@ private struct TabChip: View {
         }
         .onHover { hovering = $0 }
         .contextMenu {
-            Button("Close Tab") { model.requestClose(board.id) }
+            Button("Close Tab") { model.requestClose([board.id]) }
+            Button("Close Other Tabs") { model.requestClose(model.boards.map(\.id).filter { $0 != board.id }) }
+                .disabled(model.boards.count < 2)
         }
     }
 }

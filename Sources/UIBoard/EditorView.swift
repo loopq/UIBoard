@@ -132,8 +132,11 @@ private struct EditorAlerts: ViewModifier {
     }
 
     private var removalTitle: String {
-        if case let .frame(_, index) = model.pendingRemoval { return "Remove frame \(Frame.label(at: index))?" }
-        return "Close this tab?"
+        switch model.pendingRemoval {
+        case let .frame(_, index): return "Remove frame \(Frame.label(at: index))?"
+        case let .boards(ids) where ids.count > 1: return "Close \(ids.count) tabs?"
+        default: return "Close this tab?"
+        }
     }
 
     private func removalAction(_ removal: PendingRemoval) -> String {
@@ -143,9 +146,12 @@ private struct EditorAlerts: ViewModifier {
 
     private func removalMessage(_ removal: PendingRemoval) -> String {
         switch removal {
-        case let .board(id):
-            let count = model.boards.first { $0.id == id }?.marks.count ?? 0
-            return "Its \(count) annotations haven't been exported."
+        case let .boards(ids):
+            let dirty = model.boards.filter { ids.contains($0.id) && $0.isDirty }
+            if ids.count == 1 { return "Its \(dirty.first?.marks.count ?? 0) annotations haven't been exported." }
+            return dirty.count == 1
+                ? "1 tab has annotations that haven't been exported."
+                : "\(dirty.count) tabs have annotations that haven't been exported."
         case let .frame(board, index):
             let count = model.boards.first { $0.id == board }?.marks.filter { $0.frame == index }.count ?? 0
             return "Its \(count) annotations will be deleted."
