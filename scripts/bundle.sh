@@ -2,7 +2,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
-VERSION="${VERSION:-0.1}"
+# Releases pass X.Y.Z (scripts/release.sh); local builds say "dev" and never offer in-app updates.
+VERSION="${VERSION:-dev}"
 swift build -c release
 BIN="$(swift build -c release --show-bin-path)/UIBoard"
 APP="$ROOT/build/UIBoard.app"

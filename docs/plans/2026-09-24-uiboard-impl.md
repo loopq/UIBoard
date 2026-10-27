@@ -102,6 +102,7 @@ uiboard/
 - `Review { runtime: CGImage, facts?, marks, refs: [CGImage], figmaURL }`：像素尺寸由 `runtime` 派生（`pixelSize`）。
 - `AdbDevice { id(serial), model?, state }`、`ViewHit { resourceId, className, bounds }`、`HistoryDay { date, items: [HistoryItem { time, dir }] }`。
 - `Palette.rgb(at:)`：编号颜色循环，UI 卡片与渲染器共用。
+- `Release { version, page, asset }`：GitHub latest release。`version` 已去掉 tag 的 `v` 前缀，`asset` 指向 `UIBoard.zip`（2026-10-27 新增，见 [检查更新](2026-10-27-uiboard-check-updates.md)）。
 - `UIBoardError`：带 `errorDescription`，UI 直接展示。
 
 编号与颜色不存储，永远由下标派生：删除 #2 后原 #3 自动变 #2，没有「重新编号」逻辑。
@@ -126,6 +127,11 @@ public struct Adb {
     public func facts(serial: String, model: String?) async -> DeviceFacts
 }
 public enum HistoryScanner { public static func scan(workspace: URL) -> [HistoryDay] }   // HistoryDay / HistoryItem 见 Model.swift
+public enum Updates {                                                                    // 2026-10-27 新增
+    public static func latest(repo: String) async throws -> Release
+    public static func isNewer(_ candidate: String, than current: String) -> Bool  // 只认 X.Y.Z，其他一律 false
+    public static func install(_ release: Release, over app: URL) async throws     // 下载 → 解压 → 校验 → 原子替换
+}
 ```
 
 ### 5.3 导出目录

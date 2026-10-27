@@ -59,6 +59,10 @@ struct UIBoardCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { Task { await model.checkForUpdates(manual: true) } }
+                .disabled(model.isUpdating)
+        }
         CommandGroup(replacing: .newItem) {
             Button("Import Screenshots…") { model.importImages(to: .newBoard) }
                 .keyboardShortcut("o")

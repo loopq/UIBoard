@@ -20,6 +20,7 @@ struct EditorView: View {
         .background(WindowAccessor { model.window = $0 })
         .toolbar { toolbar }
         .task { await model.refreshDevices(prompt: false) }
+        .task { await model.checkForUpdates(manual: false) }
         .onAppear {
             monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [model] event in
                 MainActor.assumeIsolated { model.consumes(event) } ? nil : event
@@ -99,6 +100,20 @@ private struct EditorAlerts: ViewModifier {
             } message: { removal in
                 Text(removalMessage(removal))
             }
+            .alert(updateTitle, isPresented: updateBinding, presenting: model.updatePrompt) { prompt in
+                switch prompt {
+                case let .available(release):
+                    Button("Install and Relaunch") { Task { await model.installUpdate(release) } }
+                        .keyboardShortcut(.defaultAction)
+                    Button("Release Notes") { NSWorkspace.shared.open(release.page) }
+                    Button("Later", role: .cancel) {}
+                case let .failed(release, _):
+                    Button("Open Release Page") { NSWorkspace.shared.open(release.page) }
+                    Button("Cancel", role: .cancel) {}
+                }
+            } message: { prompt in
+                Text(updateMessage(prompt))
+            }
             .alert("adb not found", isPresented: $model.adbMissing) {
                 Button("Open Settings") { openSettings() }
                 Button("Cancel", role: .cancel) {}
@@ -123,6 +138,10 @@ private struct EditorAlerts: ViewModifier {
         Binding(get: { model.pendingRemoval != nil }, set: { if !$0 { model.pendingRemoval = nil } })
     }
 
+    private var updateBinding: Binding<Bool> {
+        Binding(get: { model.updatePrompt != nil }, set: { if !$0 { model.updatePrompt = nil } })
+    }
+
     private var errorBinding: Binding<Bool> {
         Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.errorMessage = nil } })
     }
@@ -136,6 +155,21 @@ private struct EditorAlerts: ViewModifier {
         case let .frame(_, index): return "Remove frame \(Frame.label(at: index))?"
         case let .boards(ids) where ids.count > 1: return "Close \(ids.count) tabs?"
         default: return "Close this tab?"
+        }
+    }
+
+    private var updateTitle: String {
+        switch model.updatePrompt {
+        case let .available(release): "UIBoard \(release.version) is available"
+        case let .failed(release, _): "Couldn't install UIBoard \(release.version)"
+        case nil: ""
+        }
+    }
+
+    private func updateMessage(_ prompt: UpdatePrompt) -> String {
+        switch prompt {
+        case .available: "You have \(model.appVersion). UIBoard will quit and reopen."
+        case let .failed(_, reason): reason
         }
     }
 

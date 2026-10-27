@@ -6,6 +6,8 @@ enum Prefs {
     static let workspacePath = "workspacePath"
     static let adbPath = "adbPath"
     static let lastDeviceSerial = "lastDeviceSerial"
+    static let lastUpdateCheck = "lastUpdateCheck"
+    static let updateRepo = "loopq/UIBoard"
     static let defaultWorkspace = "~/UIReview"
 
     static var workspaceURL: URL {
@@ -73,6 +75,8 @@ final class EditorModel {
     var isExporting = false
 
     var pendingRemoval: PendingRemoval?
+    var updatePrompt: UpdatePrompt?
+    var isUpdating = false
     var exportedURL: URL?
     var lastExport: URL?
     var errorMessage: String?
@@ -397,7 +401,7 @@ final class EditorModel {
         }
     }
 
-    private func report(_ error: Error) {
+    func report(_ error: Error) {
         errorMessage = error.localizedDescription
     }
 }

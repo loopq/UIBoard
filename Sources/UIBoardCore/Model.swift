@@ -126,6 +126,18 @@ public struct HistoryDay: Equatable, Identifiable {
     public var id: String { date }
 }
 
+public struct Release: Equatable {
+    public var version: String
+    public var page: URL
+    public var asset: URL
+
+    public init(version: String, page: URL, asset: URL) {
+        self.version = version
+        self.page = page
+        self.asset = asset
+    }
+}
+
 public enum Palette {
     public static let rgb: [UInt32] = [0xFF3B30, 0x0A84FF, 0xAF52DE, 0xFF9500, 0x34C759, 0xFF2D55]
 
@@ -140,6 +152,7 @@ public enum UIBoardError: Error, Equatable, LocalizedError {
     case processFailed(status: Int32, stderr: String)
     case timeout(String)
     case exportFailed(String)
+    case updateFailed(String)
 
     public var errorDescription: String? {
         switch self {
@@ -150,6 +163,7 @@ public enum UIBoardError: Error, Equatable, LocalizedError {
         case let .processFailed(status, stderr): "Command failed (\(status)): \(stderr)"
         case let .timeout(command): "Timed out: \(command)"
         case let .exportFailed(reason): "Export failed: \(reason)"
+        case let .updateFailed(reason): "Update failed: \(reason)"
         }
     }
 }

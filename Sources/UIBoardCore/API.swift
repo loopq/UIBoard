@@ -92,3 +92,17 @@ public enum HistoryScanner {
         HistoryImplementation.scan(workspace: workspace)
     }
 }
+
+public enum Updates {
+    public static func latest(repo: String) async throws -> Release {
+        try await UpdateImplementation.latest(from: UpdateImplementation.feed(repo: repo))
+    }
+
+    public static func isNewer(_ candidate: String, than current: String) -> Bool {
+        UpdateImplementation.isNewer(candidate, than: current)
+    }
+
+    public static func install(_ release: Release, over app: URL) async throws {
+        try await UpdateImplementation.install(release, over: app)
+    }
+}

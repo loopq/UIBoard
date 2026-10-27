@@ -8,11 +8,13 @@ UIBoard 是一个 macOS 小工具：把 App 运行截图上的 UI 问题标成 #
 
 ## 下载安装
 
-仅支持 Apple Silicon、macOS 14+。先退出正在运行的 UIBoard，再在终端执行（更新也用这条命令）：
+仅支持 Apple Silicon、macOS 14+。先退出正在运行的 UIBoard，再在终端执行：
 
 ```bash
 curl -fL https://github.com/loopq/UIBoard/releases/latest/download/UIBoard.zip -o /tmp/UIBoard.zip && rm -rf /Applications/UIBoard.app && ditto -x -k /tmp/UIBoard.zip /Applications && open /Applications/UIBoard.app
 ```
+
+更新：0.1.0 起，App 每天自动检查一次 GitHub 上的新版本，也可以手动点「UIBoard → Check for Updates…」，一键安装并重新打开。0.1.0 之前的版本（包括 1.0.0）没有这个功能，需要用上面的命令手动重装一次。
 
 App 没有经过 Apple 公证。用终端 `curl` 下载不会被 Gatekeeper 拦截。如果是从 [Releases](https://github.com/loopq/UIBoard/releases) 页面用浏览器下载的，第一次打开会提示「Apple 无法验证」，下面两种方式任选一种：
 
