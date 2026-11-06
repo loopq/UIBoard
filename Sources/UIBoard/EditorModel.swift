@@ -30,6 +30,15 @@ struct BoardFrame: Identifiable {
     var size: CGSize { CGSize(width: image.width, height: image.height) }
 }
 
+/// A Figma-style ruler guide, in board pixels. Preview only: never exported, never counted as an edit.
+struct Guide: Identifiable {
+    enum Axis { case x, y }   // .x: vertical line at x; .y: horizontal line at y
+
+    var id = UUID()
+    var axis: Axis
+    var value: CGFloat
+}
+
 struct Board: Identifiable {
     let id = UUID()
     let number: Int
@@ -38,6 +47,9 @@ struct Board: Identifiable {
     var refs: [CGImage] = [] { didSet { revision += 1 } }
     var figmaURL = "" { didSet { revision += 1 } }
     var selected: Int?
+    /// Preview-only state, deliberately outside `revision`: nudging frames or guides must not clear the exported ✓.
+    var shifts: [UUID: CGFloat] = [:]   // frame id → vertical offset in board pixels
+    var guides: [Guide] = []
     private(set) var revision = 0
     var exportedRevision: Int?
 
@@ -68,6 +80,7 @@ final class EditorModel {
     var currentID: UUID?
     var focusRequest: Int?
     var draft: Mark?
+    var showsRulers = false
 
     var devices: [AdbDevice] = []
     var selectedSerial = UserDefaults.standard.string(forKey: Prefs.lastDeviceSerial)
@@ -257,6 +270,7 @@ final class EditorModel {
     private func removeFrame(_ index: Int, board id: UUID) {
         guard let b = boards.firstIndex(where: { $0.id == id }), boards[b].frames.indices.contains(index) else { return }
         renderCache[boards[b].frames[index].id] = nil
+        boards[b].shifts[boards[b].frames[index].id] = nil
         boards[b].frames.remove(at: index)
         boards[b].marks = boards[b].marks.compactMap { mark in
             guard mark.frame != index else { return nil }
@@ -265,6 +279,55 @@ final class EditorModel {
             return mark
         }
         boards[b].selected = nil
+    }
+
+    /// Reorder frames; marks follow their frame, so their numbers stay and only the frame letters change.
+    func moveFrame(_ from: Int, to: Int) {
+        updateCurrent { board in
+            guard from != to, board.frames.indices.contains(from), board.frames.indices.contains(to) else { return }
+            var order = Array(board.frames.indices)
+            order.insert(order.remove(at: from), at: to)
+            var position = order
+            for (new, old) in order.enumerated() { position[old] = new }
+            board.frames = order.map { board.frames[$0] }
+            board.marks = board.marks.map { mark in
+                var mark = mark
+                mark.frame = position[mark.frame]
+                return mark
+            }
+        }
+        draft = nil
+    }
+
+    func shiftFrame(_ id: UUID, by dy: CGFloat) {
+        updateCurrent { $0.shifts[id] = ($0.shifts[id] ?? 0) + dy.rounded() }
+    }
+
+    func resetShift(_ id: UUID) {
+        updateCurrent { $0.shifts[id] = nil }
+    }
+
+    // MARK: Rulers
+
+    /// One switch: turning rulers off also clears every board's guides.
+    func toggleRulers() {
+        showsRulers.toggle()
+        guard !showsRulers else { return }
+        for index in boards.indices { boards[index].guides = [] }
+    }
+
+    func place(_ guide: Guide) {
+        updateCurrent { board in
+            if let index = board.guides.firstIndex(where: { $0.id == guide.id }) {
+                board.guides[index] = guide
+            } else {
+                board.guides.append(guide)
+            }
+        }
+    }
+
+    func removeGuide(_ id: UUID) {
+        updateCurrent { $0.guides.removeAll { $0.id == id } }
     }
 
     // MARK: Marks

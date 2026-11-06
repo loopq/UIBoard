@@ -73,6 +73,10 @@ struct EditorView: View {
         }
         ToolbarItemGroup(placement: .automatic) {
             Spacer()
+            Toggle(isOn: Binding(get: { model.showsRulers }, set: { _ in model.toggleRulers() })) {
+                Label("Rulers", systemImage: "ruler")
+            }
+            .help("Rulers & guides (⌘⇧R) · preview only, turning off clears guides")
             Button { openWindow(id: "history") } label: {
                 Label("History", systemImage: "clock")
             }

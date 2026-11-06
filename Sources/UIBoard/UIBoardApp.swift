@@ -86,6 +86,11 @@ struct UIBoardCommands: Commands {
             Button("Close Tab") { model.requestCloseCurrent() }
                 .keyboardShortcut("w")
         }
+        CommandGroup(before: .toolbar) {
+            Toggle("Show Rulers", isOn: Binding(get: { model.showsRulers }, set: { _ in model.toggleRulers() }))
+                .keyboardShortcut("r", modifiers: [.command, .shift])
+            Divider()
+        }
         CommandGroup(before: .windowList) {
             Button("Previous Tab") { model.selectAdjacent(-1) }
                 .keyboardShortcut("[", modifiers: [.command, .shift])

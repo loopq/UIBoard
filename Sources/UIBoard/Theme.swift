@@ -22,6 +22,7 @@ extension Color {
     static let selbg = dynamic(NSColor(rgb: 0xEAF3FF), NSColor(rgb: 0x0A84FF, alpha: 0.16))
     static let ctrl = dynamic(NSColor(rgb: 0x000000, alpha: 0.05), NSColor(rgb: 0xFFFFFF, alpha: 0.08))
     static let dash = dynamic(NSColor(rgb: 0x000000, alpha: 0.22), NSColor(rgb: 0xFFFFFF, alpha: 0.22))
+    static let guide = Color(rgb: 0xF24822)   // Figma's guide red
     static let shotline = dynamic(NSColor(rgb: 0x000000, alpha: 0.12), NSColor(rgb: 0xFFFFFF, alpha: 0.14))
 
     private static func dynamic(_ light: NSColor, _ dark: NSColor) -> Color {
