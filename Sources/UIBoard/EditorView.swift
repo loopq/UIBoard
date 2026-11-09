@@ -63,10 +63,10 @@ struct EditorView: View {
             }
             .help("Capture to a new tab (⌘⇧A) · add to this board (⌘⌥A)")
             .disabled(model.isCapturing)
-            Button { model.importImages(to: .newBoard) } label: {
+            Button { model.importReviews() } label: {
                 Label("Import", systemImage: "square.and.arrow.down")
             }
-            .help("Import screenshots into new tabs (⌘O)")
+            .help("Open exported review folders in new tabs (⌘O)")
             if model.isCapturing || model.isFetchingFacts {
                 ProgressView().controlSize(.small)
             }

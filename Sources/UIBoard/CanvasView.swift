@@ -36,7 +36,7 @@ struct CanvasView: View {
         .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 3) } }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
             let destination = model.here
-            Task { model.open(await ImageSource.load(providers), to: destination) }
+            Task { model.drop(await ImageSource.load(providers), to: destination) }
             return true
         }
     }
@@ -398,6 +398,7 @@ private struct EmptyDropZone: View {
             VStack(spacing: 8) {
                 hint("⌘V", "to paste")
                 hint("⌘⇧A", "to capture from device")
+                hint("⌘O", "to import a review")
             }
             .padding(.top, 12)
         }

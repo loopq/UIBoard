@@ -46,7 +46,7 @@ struct TabBarView: View {
         .overlay(alignment: .bottom) { Divider() }
         .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 2) } }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
-            Task { model.open(await ImageSource.load(providers), to: .newBoard) }
+            Task { model.drop(await ImageSource.load(providers), to: .newBoard) }
             return true
         }
     }

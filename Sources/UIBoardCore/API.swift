@@ -57,6 +57,16 @@ public enum ReviewExporter {
     }
 }
 
+public enum ReviewImporter {
+    public static func directories(in url: URL) -> [URL] {
+        Importer.directories(in: url)
+    }
+
+    public static func load(_ directory: URL) throws -> Review {
+        try Importer.load(directory)
+    }
+}
+
 public enum HitTest {
     public static func views(for rect: CGRect, hierarchyXML: Data) -> [ViewHit] {
         HierarchyHitTester.views(for: rect, hierarchyXML: hierarchyXML)

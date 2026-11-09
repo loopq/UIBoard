@@ -103,7 +103,7 @@ uiboard/
 - `AdbDevice { id(serial), model?, state }`、`ViewHit { resourceId, className, bounds }`、`HistoryDay { date, items: [HistoryItem { time, dir }] }`。
 - `Palette.rgb(at:)`：编号颜色循环，UI 卡片与渲染器共用。
 - `Release { version, page, asset }`：GitHub latest release。`version` 已去掉 tag 的 `v` 前缀，`asset` 指向 `UIBoard.zip`（2026-10-27 新增，见 [检查更新](2026-10-27-uiboard-check-updates.md)）。
-- `UIBoardError`：带 `errorDescription`，UI 直接展示。
+- `UIBoardError`：带 `errorDescription`，UI 直接展示。2026-11-09 新增 `importFailed(String)`（见 [导入 review](2026-11-09-uiboard-import-review.md)）。
 
 编号与颜色不存储，永远由下标派生：删除 #2 后原 #3 自动变 #2，没有「重新编号」逻辑。
 
@@ -131,6 +131,10 @@ public enum Updates {                                                           
     public static func latest(repo: String) async throws -> Release
     public static func isNewer(_ candidate: String, than current: String) -> Bool  // 只认 X.Y.Z，其他一律 false
     public static func install(_ release: Release, over app: URL) async throws     // 下载 → 解压 → 校验 → 原子替换
+}
+public enum ReviewImporter {                                                             // 2026-11-09 新增
+    public static func directories(in url: URL) -> [URL]   // url 自身 + 直接子目录中含 review.md 的目录
+    public static func load(_ directory: URL) throws -> Review  // 导出的逆运算；坏数据抛 importFailed
 }
 ```
 
@@ -241,6 +245,11 @@ Pin 用 2×2 rect 后，IoU 自动偏向包含该点的最小节点，与框共�
 | 视图树 | `adb -s S exec-out uiautomator dump /dev/tty` | 截取到 `</hierarchy>` 为止（丢弃尾部 `UI hierchary dumped to…`） | 8s | 省略字段 |
 
 截图先行（它是事实本体），事实在截图完成后后台并发抓取；导出时等待事实任务结束（受上述超时约束）。
+
+### 5.y 导入 review 目录（2026-11-09 新增）
+
+- toolbar Import / ⌘O 只打开 review 目录（v1、v2），还原为一个可编辑的标签；图片入口不变（⌘V、拖入、「+」格 Import…）。详见 [导入 review](2026-11-09-uiboard-import-review.md)。
+- `ReviewImporter.load` 只读 frontmatter、`frame`、`rect`、note、`runtime.png`、视图树和参考图；`dp` / `crop` / `views` 是派生值，再次导出时重算。格式本身不变。
 
 ## 6. Codex / Claude 并行方式
 

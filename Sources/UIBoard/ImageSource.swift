@@ -17,16 +17,21 @@ enum ImageSource {
         NSPasteboard.general.string(forType: .string) != nil
     }
 
-    static func load(_ providers: [NSItemProvider]) async -> [Data] {
-        var result: [Data] = []
+    static func load(_ providers: [NSItemProvider]) async -> (images: [Data], folders: [URL]) {
+        var images: [Data] = []
+        var folders: [URL] = []
         for provider in providers {
             if let url = await fileURL(provider) {
-                if let data = imageFile(url) { result.append(data) }
+                if (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true {
+                    folders.append(url)
+                } else if let data = imageFile(url) {
+                    images.append(data)
+                }
             } else if let data = await imageData(provider) {
-                result.append(data)
+                images.append(data)
             }
         }
-        return result
+        return (images, folders)
     }
 
     static func open(multiple: Bool) -> [Data] {

@@ -190,7 +190,7 @@ private struct ReferencesSection: View {
         }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
             let destination = model.here
-            Task { model.addRefs(await ImageSource.load(providers), to: destination) }
+            Task { model.addRefs(await ImageSource.load(providers).images, to: destination) }
             return true
         }
     }

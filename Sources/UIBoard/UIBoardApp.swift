@@ -64,7 +64,7 @@ struct UIBoardCommands: Commands {
                 .disabled(model.isUpdating)
         }
         CommandGroup(replacing: .newItem) {
-            Button("Import Screenshots…") { model.importImages(to: .newBoard) }
+            Button("Import Review…") { model.importReviews() }
                 .keyboardShortcut("o")
             Divider()
             Button("Capture to New Tab") { Task { await model.capture(to: .newBoard) } }

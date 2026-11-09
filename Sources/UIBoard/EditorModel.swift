@@ -206,6 +206,53 @@ final class EditorModel {
         open(ImageSource.open(multiple: true), to: destination)
     }
 
+    // MARK: Reviews
+
+    func importReviews() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = true
+        panel.message = "Choose exported review folders, or a folder that contains them."
+        guard panel.runModal() == .OK else { return }
+        openReviews(panel.urls)
+    }
+
+    /// Each URL may be a review folder or a folder of review folders; every review opens as its own tab.
+    func openReviews(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        let directories = urls.flatMap(ReviewImporter.directories(in:))
+        guard !directories.isEmpty else {
+            errorMessage = "No UIBoard review found in \(urls.map { "“\($0.lastPathComponent)”" }.joined(separator: ", "))."
+            return
+        }
+        var failures: [String] = []
+        for directory in directories {
+            do { add(review: try ReviewImporter.load(directory)) } catch { failures.append(error.localizedDescription) }
+        }
+        if !failures.isEmpty { errorMessage = failures.joined(separator: "\n") }
+        let opened = directories.count - failures.count
+        if opened > 0 { show(opened == 1 ? "Opened 1 review" : "Opened \(opened) reviews") }
+    }
+
+    /// Folders open as reviews in new tabs; images keep their usual destination.
+    func drop(_ items: (images: [Data], folders: [URL]), to destination: Destination) {
+        openReviews(items.folders)
+        open(items.images, to: destination)
+    }
+
+    private func add(review: Review) {
+        boardCounter += 1
+        var board = Board(number: boardCounter, frames: review.frames.map { BoardFrame(image: $0.image, facts: $0.facts) })
+        board.marks = review.marks
+        board.refs = review.refs
+        board.figmaURL = review.figmaURL
+        board.exportedRevision = board.revision   // identical to what is on disk: clean until edited
+        boards.append(board)
+        currentID = board.id
+        draft = nil
+    }
+
     func pasteFrame() {
         guard let data = ImageSource.pasteboardImage() else { return show("No image on the clipboard") }
         open([data], to: here)

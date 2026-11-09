@@ -152,6 +152,7 @@ public enum UIBoardError: Error, Equatable, LocalizedError {
     case processFailed(status: Int32, stderr: String)
     case timeout(String)
     case exportFailed(String)
+    case importFailed(String)
     case updateFailed(String)
 
     public var errorDescription: String? {
@@ -163,6 +164,7 @@ public enum UIBoardError: Error, Equatable, LocalizedError {
         case let .processFailed(status, stderr): "Command failed (\(status)): \(stderr)"
         case let .timeout(command): "Timed out: \(command)"
         case let .exportFailed(reason): "Export failed: \(reason)"
+        case let .importFailed(reason): "Import failed: \(reason)"
         case let .updateFailed(reason): "Update failed: \(reason)"
         }
     }
