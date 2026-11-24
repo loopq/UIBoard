@@ -2,6 +2,5 @@
 .swiftpm/
 build/
 .DS_Store
-docs/plans/
-docs/reviews/
+/docs/
 .codex/

@@ -2,8 +2,7 @@
 
 UIBoard 是一个 macOS 小工具：把 App 运行截图上的 UI 问题标成 #1 #2 #3，导出目录交给 Claude / Codex 的 `ui-review` skill 去定位代码并修复。
 
-- 实施计划（唯一事实源）：`docs/plans/2026-09-24-uiboard-impl.md`，动手前先读第 5 节「冻结契约」。
-- 视觉稿：`docs/design/A–H*.png`，源码 `docs/design/claude-design/`。
+- 实施计划、review、视觉稿都在 `docs/` 下，只存本地、不进 git；开发规则见 [AGENTS.md](AGENTS.md)。
 - 所有回复与文档使用简体中文；代码标识保持英文。
 
 ## 下载安装

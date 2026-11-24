@@ -4,6 +4,7 @@ UIBoard 是一个 macOS 小工具：把 App 运行截图上的 UI 问题标成 #
 
 - 实施计划（唯一事实源）：`docs/plans/2026-09-24-uiboard-impl.md`，动手前先读第 5 节「冻结契约」。
 - 视觉稿：`docs/design/A–H*.png`，源码 `docs/design/claude-design/`。
+- 以上都在 `docs/` 下，只存本地、不进 git（见「文档」）；新 clone 里没有，契约以 `Model.swift`、`API.swift` 的代码为准。
 - 所有回复与文档使用简体中文；代码标识保持英文。
 
 ## 构建与验证
@@ -33,6 +34,21 @@ scripts/bundle.sh        # 产出 build/UIBoard.app
 | `Sources/UIBoardCore/API.swift` | 签名是契约，冻结；函数体由 Lane Core 填 |
 
 各 lane 只改自己的目录，只勾 plan 里自己小节的 checkbox。
+
+## 文档（只存本地，不进 git）
+
+`docs/` 整个在 `.gitignore` 里：plan、review、PRD 副本、视觉稿会越积越多，体积持续膨胀，只做本地备份。新文档照常写到下表的位置，不要 `git add -f`，也不要为了能提交挪到别处。
+
+| 文件 | 路径 |
+|---|---|
+| 实施 plan / 设计 | `docs/plans/YYYY-MM-DD-<topic>.md`，topic 跟事务走，见名知意 |
+| review | `docs/reviews/<plan 文件名>-review.md` |
+| 飞书 PRD 本地副本 | `docs/feishu-prds/YYYY-MM-DD-<topic>.md`；引用它的 plan 标题下写 `**PRD**: [飞书原文](...) · [本地副本](../feishu-prds/...)` |
+| 视觉稿 | `docs/design/` |
+
+- 正文用简体中文，代码标识、命令、路径保留英文。
+- 不建 `docs/agents/`、`docs/superpowers/`、根目录 `reviews/` 等其他落点；skill 默认路径一律改到上表。
+- `git status` 看不到这些文件是正常的；确认文档已生成用直接读取或 `git check-ignore -v <路径>`。
 
 ## 规则
 
