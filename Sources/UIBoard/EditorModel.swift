@@ -43,9 +43,10 @@ struct Board: Identifiable {
     let id = UUID()
     let number: Int
     var frames: [BoardFrame] { didSet { revision += 1 } }
-    var marks: [Mark] = [] { didSet { revision += 1 } }
+    // Text fields can write an unchanged value back (e.g. on focus): that is not an edit and must keep the exported ✓.
+    var marks: [Mark] = [] { didSet { if marks != oldValue { revision += 1 } } }
     var refs: [CGImage] = [] { didSet { revision += 1 } }
-    var figmaURL = "" { didSet { revision += 1 } }
+    var figmaURL = "" { didSet { if figmaURL != oldValue { revision += 1 } } }
     var selected: Int?
     /// Preview-only state, deliberately outside `revision`: nudging frames or guides must not clear the exported ✓.
     var shifts: [UUID: CGFloat] = [:]   // frame id → vertical offset in board pixels
