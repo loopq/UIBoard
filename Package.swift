@@ -7,6 +7,7 @@ let package = Package(
     targets: [
         .target(name: "UIBoardCore"),
         .executableTarget(name: "UIBoard", dependencies: ["UIBoardCore"]),
+        .executableTarget(name: "uiboard-export", dependencies: ["UIBoardCore"]),
         .testTarget(name: "UIBoardCoreTests", dependencies: ["UIBoardCore"], resources: [.copy("Fixtures")]),
     ]
 )
