@@ -90,6 +90,16 @@ struct UIBoardCommands: Commands {
             Toggle("Show Rulers", isOn: Binding(get: { model.showsRulers }, set: { _ in model.toggleRulers() }))
                 .keyboardShortcut("r", modifiers: [.command, .shift])
             Divider()
+            Group {
+                Button("Zoom In") { withAnimation(.zoom) { model.zoom(by: 1.5); model.settleZoom() } }
+                    .keyboardShortcut("=")
+                Button("Zoom Out") { withAnimation(.zoom) { model.zoom(by: 1 / 1.5) } }
+                    .keyboardShortcut("-")
+                Button("Zoom to Fit") { withAnimation(.zoom) { model.zoomToFit() } }
+                    .keyboardShortcut("0")
+            }
+            .disabled(model.current == nil)
+            Divider()
         }
         CommandGroup(before: .windowList) {
             Button("Previous Tab") { model.selectAdjacent(-1) }

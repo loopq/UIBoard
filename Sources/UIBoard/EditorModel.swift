@@ -39,6 +39,13 @@ struct Guide: Identifiable {
     var value: CGFloat
 }
 
+/// Preview-only zoom: `scale` in view points per board pixel, `center` the board pixel shown at the canvas focus.
+/// nil = fit the whole board, the default and where zooming out lands. Never exported, never counted as an edit.
+struct Viewport {
+    var scale: CGFloat
+    var center: CGPoint
+}
+
 struct Board: Identifiable {
     let id = UUID()
     let number: Int
@@ -51,6 +58,7 @@ struct Board: Identifiable {
     /// Preview-only state, deliberately outside `revision`: nudging frames or guides must not clear the exported ✓.
     var shifts: [UUID: CGFloat] = [:]   // frame id → vertical offset in board pixels
     var guides: [Guide] = []
+    var viewport: Viewport?
     private(set) var revision = 0
     var exportedRevision: Int?
 
@@ -98,6 +106,7 @@ final class EditorModel {
     var toast: String?
 
     @ObservationIgnored weak var window: NSWindow?
+    @ObservationIgnored var canvasSize: CGSize = .zero   // reported by BoardView; menu zoom needs it for geometry
     @ObservationIgnored private var factsTasks: [UUID: Task<DeviceFacts, Never>] = [:]
     @ObservationIgnored private var renderCache: [UUID: (key: RenderKey, image: CGImage?)] = [:]
     @ObservationIgnored private var boardCounter = 0
@@ -143,6 +152,7 @@ final class EditorModel {
         if case let .board(id) = destination, let index = boards.firstIndex(where: { $0.id == id }) {
             let start = boards[index].frames.count
             boards[index].frames += images.map(makeFrame)
+            boards[index].viewport = nil   // the layout changed: show the whole board, new frame included
             let labels = (start..<boards[index].frames.count).map(Frame.label(at:)).joined(separator: ", ")
             show("Added frame \(labels)")
         } else {
@@ -319,6 +329,7 @@ final class EditorModel {
         guard let b = boards.firstIndex(where: { $0.id == id }), boards[b].frames.indices.contains(index) else { return }
         renderCache[boards[b].frames[index].id] = nil
         boards[b].shifts[boards[b].frames[index].id] = nil
+        boards[b].viewport = nil
         boards[b].frames.remove(at: index)
         boards[b].marks = boards[b].marks.compactMap { mark in
             guard mark.frame != index else { return nil }
@@ -376,6 +387,47 @@ final class EditorModel {
 
     func removeGuide(_ id: UUID) {
         updateCurrent { $0.guides.removeAll { $0.id == id } }
+    }
+
+    // MARK: Zoom
+
+    /// "Zoomed in?" is always asked of the geometry: a stored viewport at or below fit is no zoom.
+    private var geometry: BoardGeometry? {
+        current.map { BoardGeometry(board: $0, size: canvasSize, rulers: showsRulers) }
+    }
+
+    /// Pinch and ⌘= / ⌘-: keeps the board pixel under `point` (canvas coordinates) in place.
+    func zoom(by factor: CGFloat, at point: CGPoint? = nil) {
+        guard let geometry else { return }
+        updateCurrent { $0.viewport = geometry.zoomed(by: factor, at: point ?? geometry.focus) }
+    }
+
+    /// Reaching the recommended maximum centers the frame nearest to `point`.
+    func settleZoom(at point: CGPoint? = nil) {
+        guard let geometry, geometry.isAtMax else { return }
+        zoom(toFrame: geometry.nearestFrame(to: point ?? geometry.focus))
+    }
+
+    func zoom(toFrame index: Int) {
+        guard let geometry, geometry.frames.indices.contains(index) else { return }
+        updateCurrent { $0.viewport = geometry.focusing(index) }
+    }
+
+    /// Smart zoom (two-finger double tap): back to fit when zoomed in, else the frame under the pointer.
+    func toggleZoom(at point: CGPoint) {
+        guard let geometry else { return }
+        if geometry.isZoomed { zoomToFit() } else { zoom(toFrame: geometry.nearestFrame(to: point)) }
+    }
+
+    func zoomToFit() {
+        updateCurrent { $0.viewport = nil }
+    }
+
+    /// Pans only while zoomed in; false lets the scroll event pass through.
+    func pan(by delta: CGSize) -> Bool {
+        guard let geometry, geometry.isZoomed else { return false }
+        updateCurrent { $0.viewport = geometry.panned(by: delta) }
+        return true
     }
 
     // MARK: Marks

@@ -56,6 +56,7 @@ struct CanvasView: View {
 
 /// One mapping between board pixels and view points, shared by frames, the add slot, guides and rulers.
 /// Frames sit at `BoardLayout.offsets` horizontally and at their preview-only shift vertically.
+/// Zoom is one more input: the board's viewport picks `scale` within [fit, maxScale] and the pixel at `focus`.
 struct BoardGeometry {
     static let space = "board"
     static let header: CGFloat = 26   // frame header (20) + spacing (6) above each frame
@@ -65,6 +66,10 @@ struct BoardGeometry {
     let origin: CGPoint   // view position of board pixel (0, 0)
     let frames: [CGRect]  // board pixels
     let slot: CGRect      // board pixels
+    let fit: CGFloat      // the whole board fits
+    let maxScale: CGFloat // recommended maximum: the largest frame, header included, just fills the canvas
+    let focus: CGPoint    // view position of the viewport center
+    let center: CGPoint   // board pixel shown at `focus`
 
     init(board: Board, size: CGSize, rulers: Bool) {
         let sizes = board.frames.map(\.size)
@@ -77,10 +82,44 @@ struct BoardGeometry {
         let bounds = frames.reduce(slot) { $0.union($1) }
         let inset = rulers ? Self.ruler : 0
         let room = CGSize(width: size.width - inset - 48, height: size.height - inset - 48 - Self.header)
-        scale = max(min(room.width / bounds.width, room.height / bounds.height), 0.01)
-        origin = CGPoint(x: inset + (size.width - inset - bounds.width * scale) / 2 - bounds.minX * scale,
-                         y: inset + Self.header + (size.height - inset - Self.header - bounds.height * scale) / 2
-                             - bounds.minY * scale)
+        fit = max(min(room.width / bounds.width, room.height / bounds.height), 0.01)
+        maxScale = max(frames.map { min(room.width / $0.width, room.height / $0.height) }.min() ?? fit, fit)
+        focus = CGPoint(x: inset + (size.width - inset) / 2, y: inset + Self.header + (size.height - inset - Self.header) / 2)
+        let viewport = (board.viewport?.scale ?? 0) > fit ? board.viewport : nil   // at or below fit is no zoom
+        scale = min(viewport?.scale ?? fit, maxScale)
+        // The view center stays over the content, so it can't be panned away, yet edge frames can still be centered.
+        let wanted = viewport?.center ?? CGPoint(x: bounds.midX, y: bounds.midY)
+        center = CGPoint(x: min(max(wanted.x, bounds.minX), bounds.maxX), y: min(max(wanted.y, bounds.minY), bounds.maxY))
+        origin = CGPoint(x: focus.x - center.x * scale, y: focus.y - center.y * scale)
+    }
+
+    var isZoomed: Bool { scale > fit }
+    var isZoomable: Bool { maxScale > fit }
+    var isAtMax: Bool { isZoomable && scale >= maxScale }
+
+    /// Scale by `factor`, keeping the board pixel under `point` in place. At or below fit there is no zoom.
+    func zoomed(by factor: CGFloat, at point: CGPoint) -> Viewport? {
+        let newScale = min(scale * factor, maxScale)
+        guard newScale > fit * 1.001 else { return nil }
+        let pixel = board(point)
+        return Viewport(scale: newScale, center: CGPoint(x: pixel.x - (point.x - focus.x) / newScale,
+                                                         y: pixel.y - (point.y - focus.y) / newScale))
+    }
+
+    /// Content follows the fingers (`scrollingDelta` already honours natural scrolling).
+    func panned(by delta: CGSize) -> Viewport {
+        Viewport(scale: scale, center: CGPoint(x: center.x - delta.width / scale, y: center.y - delta.height / scale))
+    }
+
+    func focusing(_ index: Int) -> Viewport? {
+        isZoomable ? Viewport(scale: maxScale, center: CGPoint(x: frames[index].midX, y: frames[index].midY)) : nil
+    }
+
+    /// The frame horizontally closest to `point`: 0 inside a frame, so a wide frame never loses to a narrow neighbour.
+    func nearestFrame(to point: CGPoint) -> Int {
+        let x = board(point).x
+        func distance(_ i: Int) -> CGFloat { max(frames[i].minX - x, x - frames[i].maxX, 0) }
+        return frames.indices.min { distance($0) < distance($1) } ?? 0
     }
 
     func view(_ rect: CGRect) -> CGRect {
@@ -138,8 +177,67 @@ private struct BoardView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height, alignment: .topLeading)
             .coordinateSpace(name: BoardGeometry.space)
+            .background(CanvasEvents(model: model))
+            .onChange(of: geo.size, initial: true) { _, size in model.canvasSize = size }
         }
         .clipped()
+    }
+}
+
+extension Animation {
+    static let zoom = Animation.easeOut(duration: 0.2)
+}
+
+/// Pinch, smart zoom and scrolling over the canvas. SwiftUI on macOS 14 has no scroll-wheel hook, so one local
+/// monitor handles all three. The view itself is never hit: clicks, drags and drops pass straight through.
+private struct CanvasEvents: NSViewRepresentable {
+    let model: EditorModel
+
+    func makeNSView(context: Context) -> EventView { EventView(model: model) }
+    func updateNSView(_ view: EventView, context: Context) {}
+
+    final class EventView: NSView {
+        private let model: EditorModel
+        private var monitor: Any?
+
+        init(model: EditorModel) {
+            self.model = model
+            super.init(frame: .zero)
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        override var isFlipped: Bool { true }   // same top-left origin as the board coordinate space
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            monitor = nil
+            guard window != nil else { return }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.magnify, .smartMagnify, .scrollWheel]) { [weak self] event in
+                guard let self else { return event }
+                return MainActor.assumeIsolated { self.handle(event) } ? nil : event
+            }
+        }
+
+        private func handle(_ event: NSEvent) -> Bool {
+            guard let window, event.window === window, window.attachedSheet == nil else { return false }
+            let point = convert(event.locationInWindow, from: nil)
+            guard bounds.contains(point) else { return false }
+            switch event.type {
+            case .magnify:
+                model.zoom(by: 1 + event.magnification, at: point)
+                if event.phase == .ended { withAnimation(.zoom) { model.settleZoom(at: point) } }
+                return true
+            case .smartMagnify:
+                withAnimation(.zoom) { model.toggleZoom(at: point) }
+                return true
+            default:
+                let lines: CGFloat = event.hasPreciseScrollingDeltas ? 1 : 10   // mouse wheels report lines
+                return model.pan(by: CGSize(width: event.scrollingDeltaX * lines, height: event.scrollingDeltaY * lines))
+            }
+        }
     }
 }
 
@@ -157,7 +255,7 @@ private struct FrameColumn: View {
     var body: some View {
         let rect = geometry.view(geometry.frames[index])
         VStack(spacing: 6) {
-            FrameHeader(index: index, removable: removable)
+            FrameHeader(index: index, removable: removable, zoomable: geometry.isZoomable)
                 .frame(width: rect.width, height: BoardGeometry.header - 6)
                 .cursor(.openHand)
                 .gesture(move)
@@ -302,6 +400,7 @@ private struct FrameHeader: View {
     @Environment(EditorModel.self) private var model
     let index: Int
     let removable: Bool
+    let zoomable: Bool
     @State private var hovering = false
 
     var body: some View {
@@ -312,6 +411,15 @@ private struct FrameHeader: View {
                 .padding(.horizontal, 6)
                 .frame(height: 18)
                 .background(RoundedRectangle(cornerRadius: 4).fill(Color.ctrl))
+            if zoomable && hovering {
+                Button { withAnimation(.zoom) { model.zoom(toFrame: index) } } label: {
+                    Image(systemName: "plus.magnifyingglass").font(.system(size: 10, weight: .semibold)).frame(width: 16, height: 16)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("Zoom to frame \(Frame.label(at: index))")
+                .accessibilityLabel("Zoom to frame \(Frame.label(at: index))")
+            }
             if removable && hovering {
                 Button { model.requestRemoveFrame(index) } label: {
                     Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).frame(width: 16, height: 16)

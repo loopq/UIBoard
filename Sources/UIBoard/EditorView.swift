@@ -9,7 +9,10 @@ struct EditorView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if !model.boards.isEmpty { TabBarView() }
+            // zIndex: a zoomed board overflows its clipped canvas, and clipping doesn't stop hit testing. The tab bar
+            // comes before the canvas, so without it a click there pins a frame hidden below. (The inspector comes
+            // after the canvas and is already on top.)
+            if !model.boards.isEmpty { TabBarView().zIndex(1) }
             HStack(spacing: 0) {
                 CanvasView()
                 Divider()
