@@ -15,6 +15,23 @@ enum ImageCodec {
         return image
     }
 
+    /// The pixels decoded into memory once, in the image's own color space so a re-export keeps its tagging.
+    /// Crops of a lazily decoded PNG share no cache: every draw of any crop re-decodes the whole file, which froze
+    /// a 20-frame review for seconds per click. Falls back to the lazy image if no bitmap context fits.
+    static func decoded(_ image: CGImage) -> CGImage {
+        guard let space = image.colorSpace, let context = CGContext(
+            data: nil,
+            width: image.width,
+            height: image.height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: space,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return image }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        return context.makeImage() ?? image
+    }
+
     static func png(_ image: CGImage) throws -> Data {
         let data = NSMutableData()
         guard let destination = CGImageDestinationCreateWithData(

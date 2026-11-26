@@ -111,12 +111,12 @@ final class EditorModel {
     @ObservationIgnored private var renderCache: [UUID: (key: RenderKey, image: CGImage?)] = [:]
     @ObservationIgnored private var boardCounter = 0
 
+    /// Exactly what one frame's rendering depends on, so a click on frame C never re-renders the other frames.
     private struct RenderKey: Equatable {
         let image: ObjectIdentifier
-        let frame: Int
-        let geometry: [CGRect]
-        let owners: [Int]
-        let highlight: Int?
+        let marks: [Int]   // indices into the board's marks: badge numbers and colours
+        let rects: [CGRect]
+        let highlight: Int?   // only when the highlighted mark is on this frame
     }
 
     var currentIndex: Int? { boards.firstIndex { $0.id == currentID } }
@@ -133,12 +133,16 @@ final class EditorModel {
         body(&boards[index])
     }
 
+    /// Ceiling: any change to a frame's marks re-rasterizes that whole frame, and Core Animation then color-matches
+    /// the new bitmap on the main thread (~10 ms for 1080×2340). Upgrade path: draw marks as a vector overlay on the
+    /// static screenshot, at the cost of a second drawing path next to the exported one.
     func rendered(frame index: Int) -> CGImage? {
         guard let board = current, board.frames.indices.contains(index) else { return nil }
         let frame = board.frames[index]
         let shown = draft.map { board.marks + [$0] } ?? board.marks
-        let key = RenderKey(image: ObjectIdentifier(frame.image), frame: index,
-                            geometry: shown.map(\.rect), owners: shown.map(\.frame), highlight: board.selected)
+        let mine = shown.indices.filter { shown[$0].frame == index }
+        let key = RenderKey(image: ObjectIdentifier(frame.image), marks: mine, rects: mine.map { shown[$0].rect },
+                            highlight: board.selected.flatMap { mine.contains($0) ? $0 : nil })
         if let cached = renderCache[frame.id], cached.key == key { return cached.image }
         let image = AnnotationRenderer.render(runtime: frame.image, marks: shown, frame: index, highlight: board.selected)
         renderCache[frame.id] = (key, image)
@@ -226,11 +230,12 @@ final class EditorModel {
         panel.allowsMultipleSelection = true
         panel.message = "Choose exported review folders, or a folder that contains them."
         guard panel.runModal() == .OK else { return }
-        openReviews(panel.urls)
+        Task { await openReviews(panel.urls) }
     }
 
     /// Each URL may be a review folder or a folder of review folders; every review opens as its own tab.
-    func openReviews(_ urls: [URL]) {
+    /// Loading decodes runtime.png in full (~0.5 s for 20 frames), so it runs off the main thread.
+    func openReviews(_ urls: [URL]) async {
         guard !urls.isEmpty else { return }
         let directories = urls.flatMap(ReviewImporter.directories(in:))
         guard !directories.isEmpty else {
@@ -239,7 +244,11 @@ final class EditorModel {
         }
         var failures: [String] = []
         for directory in directories {
-            do { add(review: try ReviewImporter.load(directory)) } catch { failures.append(error.localizedDescription) }
+            do {
+                add(review: try await Task.detached { try ReviewImporter.load(directory) }.value)
+            } catch {
+                failures.append(error.localizedDescription)
+            }
         }
         if !failures.isEmpty { errorMessage = failures.joined(separator: "\n") }
         let opened = directories.count - failures.count
@@ -247,8 +256,8 @@ final class EditorModel {
     }
 
     /// Folders open as reviews in new tabs; images keep their usual destination.
-    func drop(_ items: (images: [Data], folders: [URL]), to destination: Destination) {
-        openReviews(items.folders)
+    func drop(_ items: (images: [Data], folders: [URL]), to destination: Destination) async {
+        await openReviews(items.folders)
         open(items.images, to: destination)
     }
 

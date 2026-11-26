@@ -34,7 +34,7 @@ enum Importer {
             throw Invalid("review.md has no frontmatter")
         }
         let (fields, frameFields) = frontmatter(lines[1..<end])
-        let runtime = try image("runtime.png", in: directory)
+        let runtime = ImageCodec.decoded(try image("runtime.png", in: directory))   // every frame is a crop of it
 
         let specs: [[String: String]]
         switch fields["format"] {

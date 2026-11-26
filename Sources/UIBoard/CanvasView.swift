@@ -36,7 +36,7 @@ struct CanvasView: View {
         .overlay { if dropTargeted { Rectangle().strokeBorder(Color.accentColor, lineWidth: 3) } }
         .onDrop(of: ImageSource.dropTypes, isTargeted: $dropTargeted) { providers in
             let destination = model.here
-            Task { model.drop(await ImageSource.load(providers), to: destination) }
+            Task { await model.drop(await ImageSource.load(providers), to: destination) }
             return true
         }
     }
